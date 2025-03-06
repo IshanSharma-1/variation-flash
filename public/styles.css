@@ -56,11 +56,11 @@ body {
 }
 
 .card-back {
-    background-image: url('/assets/cards/card-back.png');
+    background-image: url('.../assets/cards/card-back.png');
 }
 
 .card-front {
-    background-image: url('/assets/cards/card-front.png');
+    background-image: url('.../assets/cards/card-front.png');
 }
 
 .coin {
