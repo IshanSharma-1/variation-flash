@@ -1,0 +1,27 @@
+{
+    "name": "uno-game",
+    "version": "1.0.0",
+    "description": "A web-based Uno-type game",
+    "main": "index.js",
+    "scripts": {
+      "start": "webpack serve --open",
+      "build": "webpack --mode production"
+    },
+    "dependencies": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "react-router-dom": "^6.3.0",
+      "socket.io-client": "^4.5.1"
+    },
+    "devDependencies": {
+      "webpack": "^5.65.0",
+      "webpack-cli": "^4.9.1",
+      "webpack-dev-server": "^4.7.3",
+      "babel-loader": "^8.2.3",
+      "@babel/core": "^7.16.0",
+      "@babel/preset-env": "^7.16.4",
+      "@babel/preset-react": "^7.16.0"
+    },
+    "author": "Ishan Sharma",
+    "license": "MIT"
+  }

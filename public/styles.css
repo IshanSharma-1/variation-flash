@@ -1,0 +1,95 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.ad-banner {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #ddd;
+    text-align: center;
+    padding: 10px;
+}
+
+.welcome-screen,
+.room,
+.game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.players {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.player {
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid #000;
+    border-radius: 5px;
+}
+
+.current {
+    background-color: #f0f0f0;
+}
+
+.card {
+    width: 100px;
+    height: 150px;
+    background-size: cover;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.card-back {
+    background-image: url('/assets/cards/card-back.png');
+}
+
+.card-front {
+    background-image: url('/assets/cards/card-front.png');
+}
+
+.coin {
+    width: 30px;
+    height: 30px;
+    background-color: gold;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 5px;
+    position: relative;
+    animation: dropCoin 1s forwards;
+}
+
+@keyframes dropCoin {
+    0% {
+        top: -50px;
+    }
+    100% {
+        top: 0;
+    }
+}
+
+.drag-zone {
+    border: 2px dashed #ccc;
+    padding: 10px;
+    margin: 10px;
+    width: 300px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
