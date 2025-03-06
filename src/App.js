@@ -1,18 +1,19 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import WelcomeScreen from './components/WelcomeScreen';
-import Room from './components/Room';
-import Game from './components/Game';
+import React, { useState } from 'react';
+import Lobby from './components/Lobby';
+import GameBoard from './components/GameBoard';
 
 function App() {
+  // Initially, no players have joined.
+  const [players, setPlayers] = useState(null);
+
   return (
-    <Router>
-      <Switch>
-        <Route path="/" exact component={WelcomeScreen} />
-        <Route path="/room/:roomId" component={Room} />
-        <Route path="/game/:roomId" component={Game} />
-      </Switch>
-    </Router>
+    <div className="min-h-screen bg-gray-100 p-4">
+      {!players ? (
+        <Lobby onStartGame={(playerList) => setPlayers(playerList)} />
+      ) : (
+        <GameBoard players={players} />
+      )}
+    </div>
   );
 }
 
