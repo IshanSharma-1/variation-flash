@@ -1,56 +1,198 @@
-- no login required, welcome screen
-- ads on welcome screen like sticking to the bottom of the screen
-- create room, share link and allow others to join in via that link [max 8 people can play] - with audio support - letting players mute and unmute themselves and add reaction animations
-- 52 deck of cards
-- different game variations from the list shared below, totally randomized but first 3 games of all sessions by deafult will be normal game (all game types mentioned below):
-- everyone will have like coins around 50 in the start.
-- each person can choose whether they want to play this one circle blind or they wanna see their cards (this mandatory at the start of every game - only for just the starting round/turn of all players.)
-- plan in advance before the turn even begins(before cards are even shuffled), for blind players, they will need to add 2 coins in  the common bowl, if the player wants to see it, they then need to add only 1 coin - max blinds are set to 2 per game
-- cards are shuffled to all players based on the game decided to play - game name highlighted above along with the time in the current game.
-- then we go around the table, where the person turn is highlighted in a circle sitting manner - 2d only
-- they can pack or give 2 coins in bowl to let everyone know they are playing.
-- if they pack, it means they wont have cards till the game ends.
-- they go circle and circle, they can pack and play.
-- when only 2 players are left - we give them an option to show (asking the other player to show their cards) to continue playing their turn of 2 coins per turn.
-- lastly if the person wins, he gets all the coins accumulated during that particular game.
-- the players decide which game to play next
-- the player sitting on the left hand side of the player has to add 1 coin + 1 coin since the previous person sitting anticlockwise next had won and game continues.
+Teen Patti Game Documentation
 
-what all logic we need:
-- shuffling cards as per the game since each game may need 3 or 4 or 5 cards.
-- when game is having 5 cards, no one is allowed to play blind and all players have to add only 1 coin each to begin the game.
-- if players are <8, remove empty slots and make sure each player added coin before shuffling and distribution of cards even begin.
-- random card distribution for all games for fair play
-- random game type allotment but first 3 games by default will be normal.
-- if a player looses all coins, his balance turns negative
-- all coins go to a bowl
-- 1 coin is worth Rs. 10
-- after cards are distributed to all players, keep the pending cards in the middle, nearby the bowl
+Overview
 
-what all assets we need:
-- 52 deck of cards
-- ui elements best in class
-- shuffling cards animations
-- best in class ui/ux
-- hosting on github pages
-- putting coins in a bowl - animation of coins going in a bowl
-- a round structure of playing - maybe a circle denoting player's name or whatever looks visually appealing
+This document provides comprehensive product documentation for an online Teen Patti game, covering features, user flow, game mechanics, assets, and variations. The game offers a seamless real-time multiplayer experience without requiring user login, ensuring instant access for players.
 
+Features
 
-game types:
-- normal: 3 cards distributed to all players
-- 3 in Muflis: 3 cards distributed
-- 4 in Muflis: 4 cards distributed
-- Kiss Miss & Jump: 5 cards
-- AK47 - III: 3 Cards
-- AK47 IV: 4 Cards
-- AK56-III: 3 Cards
--AK56-IV: 4 Cards
-- K-Little: 3 Cards
-- J-Little: 3 Cards
-- Lallan Kallan: 3 Cards
-- Any Card Joker-III: 3 Cards
-- Any Card Joker-IV: 4 Cards
-- 1942: A Love Story-III: 3 Cards
-- 1942: A Love Story-IV: 4 Cards
-- 
+Welcome Screen
+
+No login required.
+
+Displays game title and branding.
+
+Ads positioned at the bottom of the screen for visibility.
+
+"Create Room" button for initiating a new game session.
+
+Quick access to game rules and variations.
+
+Multiplayer Gameplay
+
+Maximum of 8 players per room.
+
+Room creator generates and shares a unique game link for others to join.
+
+Real-time voice chat with mute/unmute functionality.
+
+Animated reaction icons to enhance player interaction.
+
+Game operates using a standard 52-card deck.
+
+User-friendly UI designed for mobile and desktop platforms.
+
+Coins System
+
+Each player starts with 50 coins.
+
+Players decide at the start of each game whether to play blind or see their cards.
+
+Blind players contribute 2 coins, and non-blind players contribute 1 coin.
+
+Maximum of 2 blind turns per person per game.
+
+Coins accumulate in a central bowl throughout the game.
+
+1 coin holds a value of Rs. 10.
+
+Players who lose all their coins have their balance turn negative.
+
+Players can view their remaining balance at all times.
+
+Gameplay Flow
+
+Players join a room (minimum 2, maximum 8 players).
+
+Room creator selects a game variation (first 3 games default to "Normal").
+
+Players decide to play blind (max 2 times in a game) or reveal their cards.
+
+Cards are shuffled and distributed based on the game variation.
+
+Turns progress in a circular order around the table.
+
+Players can either pack (exit the round) or contribute 2 coins to continue playing.
+
+When only two players remain, they can request a "show" to reveal cards or continue playing.
+
+The winner collects all coins accumulated in the bowl.
+
+The next game starts with the left-side player of the winner contributing an extra coin.
+
+Players vote on the next game variation before proceeding.
+
+If a player’s balance turns negative, they can still continue playing shown as negative money.
+
+User Flow
+
+Welcome Screen → Players can create or join a game room.
+
+Room Creation → A unique game link is generated.
+
+Waiting for Players → Minimum 2 players needed, maximum of 8 allowed.
+
+Players Join & Choose Nicknames → Each player picks a display name.
+
+Game Start → Rules displayed, players choose to play blind or not.
+
+Gameplay Progresses → Turns move in a circular sequence.
+
+Round Ends → Winner collects all accumulated coins.
+
+Next Round Begins → Players decide the next game variation.
+
+Session Continues → Players can exit or continue playing new rounds.
+
+Game Variations
+
+Normal: 3 cards per player.
+
+3 in Muflis: 3 cards.
+
+4 in Muflis: 4 cards.
+
+Kiss Miss & Jump: 5 cards.
+
+AK47 - III: 3 cards.
+
+AK47 IV: 4 cards.
+
+AK56-III: 3 cards.
+
+AK56-IV: 4 cards.
+
+K-Little: 3 cards.
+
+J-Little: 3 cards.
+
+Lallan Kallan: 3 cards.
+
+Any Card Joker-III: 3 cards.
+
+Any Card Joker-IV: 4 cards.
+
+1942: A Love Story-III: 3 cards.
+
+1942: A Love Story-IV: 4 cards.
+
+Game Logic
+
+Deck is shuffled randomly based on the game type (3, 4, or 5 cards per player).
+
+If a game variation requires 5 cards, blind play is disabled, and all players must contribute 1 coin before card distribution.
+
+Ensure all players have contributed coins before shuffling and distributing cards.
+
+Fair random distribution of cards for all players.
+
+Automatic game type allotment (first 3 games are always "Normal").
+
+Negative balance tracking is enabled, allowing players to continue borrowing coins.
+
+Coins are visually placed into a bowl at the center of the table.
+
+After card distribution, remaining cards are placed near the bowl.
+
+A circular player turn indicator highlights the active participant.
+
+Live tracking of total coins in the game’s pot.
+
+if the player is playing blind, they cant see their cards until they no longer want to play blind or their blind limit is exhausted for the game.
+
+3 white card like squares can be shown for those blind playing players
+
+all other players can view their cards on their screens
+
+Required Assets
+
+52 Deck of Cards → Digitally designed for an optimized experience - already available in repo.
+
+High-Quality UI Elements → Aesthetic and intuitive.
+
+Card Shuffling Animations → Smooth animations for realism.
+
+Coin Drop Animations → Coins visually falling into the bowl.
+
+2D Circular Table UI → Displays players' names and avatars.
+
+Audio & UI Feedback → Enhanced interactivity and game immersion.
+
+Live Chat & Reactions → Text chat and quick reaction emojis.
+
+Game Hosting → Hosted on GitHub Pages for seamless deployment.
+
+Customizable Themes → Players can choose different UI themes for a personalized experience.
+
+Tech Stack & Best Practices
+
+Frontend: React.js, Tailwind CSS for responsive styling.
+
+Backend: Node.js with WebSockets for real-time multiplayer functionality.
+
+UI Framework: ShadCN/UI for high-quality UI elements.
+
+Hosting: GitHub Pages for front-end deployment, Firebase for real-time database and game sessions.
+
+Animations: Framer Motion for smooth visual transitions and interactions.
+
+Security Measures: End-to-end encryption for voice chat and user interactions.
+
+Optimization: Lazy loading assets for faster load times.
+
+Cross-Platform Compatibility: Fully responsive design for mobile, tablet, and desktop.
+
+Performance Testing: Load testing to ensure smooth gameplay at full capacity.
+
+This detailed documentation ensures the game is designed to provide a highly engaging, intuitive, and visually appealing multiplayer experience while maintaining best-in-class UI/UX principles and game mechanics.
+
