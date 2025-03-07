@@ -36,11 +36,13 @@ const GameBoard = ({ players }) => {
 
   // After 3 games, randomize match order.
   useEffect(() => {
+    setGameState(prevState =>{
     if (gameState.gameCount > 3) {
-      const randomized = randomizeMatches([...gameState.players]);
-      gameState.players = randomized;
-      setGameState({ ...gameState });
+      const randomized = randomizeMatches([...prevState.players]);
+      return{...prevState, players: randomized};
     }
+    return prevState;
+    });
   }, [gameState.gameCount]);
 
   const currentPlayer = gameState.players[gameState.currentTurn];
