@@ -1,6 +1,8 @@
-// Simple AI decision: randomly play or pack
-export function aiAction() {
-  return Math.random() > 0.5 ? 'play' : 'pack';
+// Function to determine AI decisions (one continues, one packs)
+export function aiDecisions() {
+  const firstAIContinues = Math.random() < 0.5; // Randomly decide for AI 1
+  return {
+    ai1: firstAIContinues, // true = continue, false = out
+    ai2: !firstAIContinues // AI 2 does the opposite of AI 1
+  };
 }
-
-// Note: Currently not used separately since AI logic is in App.js for simplicity

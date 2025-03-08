@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import StartScreen from './components/StartScreen';
-import GameSelection from './components/GameSelection';
+import React, { useState, useEffect } from 'react';
 import GameBoard from './components/GameBoard';
+import { aiDecisions } from './utils/gameLogic';
 import { createDeck, shuffleDeck, dealCards } from './utils/deck';
 
-// Define 15 Teen Patti variations with card counts
+// Define the 15 game variations with their card counts
 const variations = [
   { name: 'Normal', cards: 3 },
   { name: '3 in Muflis', cards: 3 },
@@ -24,7 +23,6 @@ const variations = [
 ];
 
 function App() {
-  const [screen, setScreen] = useState('start'); // 'start', 'select', 'game'
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [players, setPlayers] = useState([
     { name: 'You', coins: 50, hand: [], isHuman: true, active: true },
@@ -32,79 +30,170 @@ function App() {
     { name: 'AI 2', coins: 50, hand: [], isHuman: false, active: true },
   ]);
   const [currentPlayer, setCurrentPlayer] = useState(0);
-  const [gameCount, setGameCount] = useState(0);
+  const [deck, setDeck] = useState(shuffleDeck(createDeck()));
 
-  // Transition to game selection screen
-  const startSelection = () => setScreen('select');
+    // <!-- NEW LOGIC: START -->
+    const [prizePool, setPrizePool] = useState(0); // Track the prize pool
+    const [gamePhase, setGamePhase] = useState('playing'); // 'playing' or 'showdown'
+    // <!-- NEW LOGIC: END -->
 
   // Start a new game with the selected variation
   const startGame = (variation) => {
     setSelectedVariation(variation);
-    const deck = shuffleDeck(createDeck());
-    const hands = dealCards(deck, players.length, variation.cards);
+    const hands = dealCards(deck, players.length, variation.cards); // Deal cards based on variation
     const updatedPlayers = players.map((player, index) => ({
       ...player,
-      hand: hands[index],
-      active: true, // Reset active status
+      hand: hands[index] || [], //FIXXXXXXXXXXXXXXXX IF FAILS INDEX]
+      active: true, // Reset all players to active
     }));
     setPlayers(updatedPlayers);
-    setCurrentPlayer(0);
-    setScreen('game');
+    setCurrentPlayer(0); // Start with the human player
+    // <!-- NEW LOGIC: START -->
+    setPrizePool(0); // Reset prize pool at the start of the game
+    setGamePhase('playing'); // Reset game phase
+    // <!-- NEW LOGIC: END -->
   };
 
-  // Handle turn ending: deduct coins, AI actions, and cycle turns
-  const handleEndTurn = () => {
+  // Handle human player's "Continue" action
+  const handleContinue = () => {
     let updatedPlayers = [...players];
-    const player = updatedPlayers[currentPlayer];
-
-    // Deduct 2 coins from current player if active
-    if (player.active) {
-      player.coins -= 2;
-    }
-
-    // AI decision: play or pack (randomly)
-    if (!player.isHuman && player.active) {
-      player.active = Math.random() > 0.5; // 50% chance to pack
-    }
-
-    // Move to next active player
-    let nextPlayer = (currentPlayer + 1) % players.length;
-    while (!updatedPlayers[nextPlayer].active && activePlayers(updatedPlayers) > 1) {
-      nextPlayer = (nextPlayer + 1) % players.length;
-    }
-
+    updatedPlayers[currentPlayer].coins -= 2; // Deduct 2 coins for continuing
     setPlayers(updatedPlayers);
-    setCurrentPlayer(nextPlayer);
+    // <!-- NEW LOGIC: START -->
+    setPrizePool(prizePool + 2); // Add to prize pool
+    // <!-- NEW LOGIC: END -->
+    nextTurn(); // Move to the next player
+  };
 
-    // Check if game should end (e.g., only one player active)
-    if (activePlayers(updatedPlayers) <= 1) {
-      handlePlayAgain();
+  // Handle human player's "Out" action
+  const handleOut = () => {
+    let updatedPlayers = [...players];
+    updatedPlayers[currentPlayer].active = false; // Mark player as inactive
+    setPlayers(updatedPlayers);
+    // <!-- NEW LOGIC: START -->
+    if (activePlayers() === 1) {
+      awardPrizeToWinner();
+    } else if (activePlayers() === 2) {
+      setGamePhase('showdown'); // Enter showdown phase
     }
+    // <!-- NEW LOGIC: END -->
+    nextTurn(); // Move to the next player
   };
 
-  // Count active players
-  const activePlayers = (playersList) => playersList.filter((p) => p.active).length;
-
-  // Reset game with a random variation
-  const handlePlayAgain = () => {
-    const randomVariation = variations[Math.floor(Math.random() * variations.length)];
-    setGameCount(gameCount + 1);
-    startGame(randomVariation);
+   // <!-- NEW LOGIC: START -->
+  // Handle human player's "Show" action (reveal cards)
+  const handleShow = () => {
+    // For simplicity, assume the human wins if they show (you can add card comparison logic later)
+    awardPrizeToWinner();
   };
+
+  // Handle human player's "Quit" action
+  const handleQuit = () => {
+    let updatedPlayers = [...players];
+    updatedPlayers[currentPlayer].active = false; // Mark human as inactive
+    setPlayers(updatedPlayers);
+    awardPrizeToWinner(); // Last remaining player wins
+  };
+  // <!-- NEW LOGIC: END -->
+
+  // Move to the next active player
+  const nextTurn = () => {
+    let next = (currentPlayer + 1) % players.length;
+    while (!players[next].active && activePlayers() > 1) {
+      next = (next + 1) % players.length; // Skip inactive players
+    }
+    setCurrentPlayer(next);
+  };
+
+  // Count the number of active players
+  const activePlayers = () => players.filter((p) => p.active).length;
+
+  // <!-- NEW LOGIC: START -->
+  // Award the prize pool to the winner
+  const awardPrizeToWinner = () => {
+    const winnerIndex = players.findIndex((p) => p.active);
+    if (winnerIndex !== -1) {
+      let updatedPlayers = [...players];
+      updatedPlayers[winnerIndex].coins += prizePool;
+      setPlayers(updatedPlayers);
+      alert(`${players[winnerIndex].name} wins the prize pool of ${prizePool} coins!`);
+    }
+    setGamePhase('ended');
+  };
+  // <!-- NEW LOGIC: END -->
+
+  // Handle AI turns automatically
+  useEffect(() => {
+    const current = players[currentPlayer];
+    if (!current.isHuman && current.active && activePlayers() > 1) {
+      const timer = setTimeout(() => {
+        const decisions = aiDecisions(); // Get AI decisions (one continues, one packs)
+        let updatedPlayers = [...players];
+        if (currentPlayer === 1) {
+          // AI 1's turn, also decide for AI 2 to ensure they don't decide the same
+          updatedPlayers[1].active = decisions.ai1;
+          updatedPlayers[1].coins -= decisions.ai1 ? 2 : 0; // Deduct coins if continuing
+          // <!-- NEW LOGIC: START -->
+          if (decisions.ai1) setPrizePool(prizePool + 2);
+          // <!-- NEW LOGIC: END -->
+          updatedPlayers[2].active = decisions.ai2;
+          updatedPlayers[2].coins -= decisions.ai2 ? 2 : 0;
+          // <!-- NEW LOGIC: START -->
+          if (decisions.ai2) setPrizePool(prizePool + 2);
+          // <!-- NEW LOGIC: END -->
+        }
+        setPlayers(updatedPlayers);
+        // <!-- NEW LOGIC: START -->
+        if (activePlayers() === 1) {
+          awardPrizeToWinner();
+        } else if (activePlayers() === 2) {
+          setGamePhase('showdown');
+        }
+        // <!-- NEW LOGIC: END -->
+        nextTurn();
+      }, 1000); // 1-second delay to simulate AI thinking
+      return () => clearTimeout(timer); // Cleanup timer
+    }
+  }, [currentPlayer, players]);
+
+    // <!-- NEW LOGIC: START -->
+  // Calculate the total prize pool (sum of all players' coins)
+  const totalPrizePool = players.reduce((sum, player) => sum + player.coins, 0);
+  // <!-- NEW LOGIC: END -->
 
   return (
-    <div className="min-h-screen">
-      {screen === 'start' && <StartScreen onStart={startSelection} />}
-      {screen === 'select' && (
-        <GameSelection variations={variations} onSelect={startGame} />
-      )}
-      {screen === 'game' && (
+    <div className="min-h-screen bg-gray-800 flex items-center justify-center">
+      {!selectedVariation ? (
+        // Display variation selection screen
+        <div className="text-white">
+          <h1 className="text-3xl mb-4">Select a Game Variation</h1>
+          <div className="grid grid-cols-3 gap-4">
+            {variations.map((variation) => (
+              <button
+                key={variation.name}
+                onClick={() => startGame(variation)}
+                className="p-4 bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                {variation.name} ({variation.cards} cards)
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        // Display the game board once a variation is selected
         <GameBoard
           players={players}
-          variation={selectedVariation}
           currentPlayer={currentPlayer}
-          onEndTurn={handleEndTurn}
-          onPlayAgain={handlePlayAgain}
+          onContinue={handleContinue}
+          onOut={handleOut}
+          variation={selectedVariation}
+          totalPrizePool={totalPrizePool}
+           // <!-- NEW LOGIC: START -->
+           prizePool={prizePool}
+           gamePhase={gamePhase}
+           onShow={handleShow}
+           onQuit={handleQuit}
+           // <!-- NEW LOGIC: END -->
         />
       )}
     </div>

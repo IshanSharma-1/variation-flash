@@ -1,8 +1,7 @@
-// Define suits and ranks for a standard 52-card deck
-const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
+// src/deck.js
+const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
 const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace'];
 
-// Create a fresh deck of 52 cards
 export function createDeck() {
   const deck = [];
   for (let suit of suits) {
@@ -13,7 +12,6 @@ export function createDeck() {
   return deck;
 }
 
-// Shuffle the deck using Fisher-Yates algorithm
 export function shuffleDeck(deck) {
   const shuffled = [...deck];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -23,7 +21,6 @@ export function shuffleDeck(deck) {
   return shuffled;
 }
 
-// Deal cards to players based on variation
 export function dealCards(deck, numPlayers, cardsPerPlayer) {
   const hands = Array.from({ length: numPlayers }, () => []);
   const shuffledDeck = [...deck];

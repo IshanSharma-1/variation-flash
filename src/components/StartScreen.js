@@ -4,7 +4,7 @@ function StartScreen({ onStart }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
       <h1 className="text-6xl font-extrabold mb-10 text-yellow-400 tracking-wide">
-        THE ROYAL
+        VARIATION FLASH
       </h1>
       <button
         onClick={onStart}

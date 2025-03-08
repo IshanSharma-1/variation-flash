@@ -1,46 +1,54 @@
 import React from 'react';
 import PlayerPanel from './PlayerPanel';
+import Controls from './Controls';
 
-function GameBoard({ players, variation, currentPlayer, onEndTurn, onPlayAgain }) {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-green-900 text-white">
-      {/* Game Info */}
-      <div className="mb-6 text-2xl font-semibold text-yellow-300">
-        Playing: {variation.name}
+function GameBoard({ players, currentPlayer, onContinue, onOut, variation, totalPrizePool, gamePhase, onShow, onQuit }) {
+    const activePlayersCount = players.filter((p) => p.active).length;
+    return (
+    <div className="text-center">
+      {/* Display the current variation name */}
+      <h1 className="text-4xl text-white mb-8">Teen Patti - {variation.name}</h1>
+      <p className="text-2xl text-yellow-300 mb-4">Total Prize Pool: {totalPrizePool} Coins</p>
+      <div className="grid grid-cols-3 gap-4">
+      {players.map((player, index) => (
+        
+  <PlayerPanel
+    key={index}
+    player={player}
+    isCurrent={index === currentPlayer}
+  />
+))}
       </div>
-
-      {/* Circular Player Layout */}
-      <div className="relative w-[700px] h-[700px]">
-        {players.map((player, index) => (
-          <div
-            key={player.name}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2"
-            style={{
-              top: '50%',
-              left: '50%',
-              transform: `translate(-50%, -50%) rotate(${(360 / players.length) * index}deg) translate(250px) rotate(-${(360 / players.length) * index}deg)`,
-            }}
+       {/* <!-- NEW LOGIC: START --> */}
+       {gamePhase === 'showdown' && activePlayersCount === 2 && players[currentPlayer].isHuman ? (
+        <div className="mt-8 flex space-x-4">
+          <button
+            onClick={onShow}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            <PlayerPanel player={player} isCurrent={index === currentPlayer} />
-          </div>
-        ))}
-      </div>
-
-      {/* Controls */}
-      <div className="mt-8 flex space-x-4">
-        <button
-          onClick={onEndTurn}
-          className="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition duration-200 shadow-md"
-        >
-          End Turn
-        </button>
-        <button
-          onClick={onPlayAgain}
-          className="bg-red-600 text-white px-8 py-3 rounded-full hover:bg-red-700 transition duration-200 shadow-md"
-        >
-          Play Again
-        </button>
-      </div>
+            Show
+          </button>
+          <button
+            onClick={onContinue}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            Continue
+          </button>
+          <button
+            onClick={onQuit}
+            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Quit
+          </button>
+        </div>
+      ) : (
+        <Controls
+          onContinue={onContinue}
+          onOut={onOut}
+          isHumanTurn={players[currentPlayer].isHuman && players[currentPlayer].active}
+        />
+      )}
+      {/* <!-- NEW LOGIC: END --> */}
     </div>
   );
 }
