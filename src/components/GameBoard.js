@@ -1,77 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PlayerPanel from './PlayerPanel';
-import CoinPool from './CoinPool';
-import Controls from './Controls';
-import { initGame, getGameState, addCoins, pack, revealCards } from '../utils/gameLogic';
-import { randomizeMatches } from '../utils/matchRandomizer';
 
-const GameBoard = ({ players }) => {
-  const [gameState, setGameState] = useState({ players: [], pool: 0, currentTurn: 0, gameCount: 1 });
-
-  useEffect(() => {
-    // Initialize game state with dynamic players.
-    initGame(players);
-    setGameState(getGameState());
-  }, [players]);
-
-  const updateGameState = () => {
-    setGameState({ ...getGameState() });
-  };
-
-  const handlePlay = () => {
-    // Deduct 2 coins from the current player and add to pool.
-    addCoins(gameState.currentTurn, 2);
-    updateGameState();
-  };
-
-  const handlePack = () => {
-    pack(gameState.currentTurn);
-    updateGameState();
-  };
-
-  const handleReveal = () => {
-    revealCards(gameState.currentTurn);
-    updateGameState();
-  };
-
-  // After 3 games, randomize match order.
-  useEffect(() => {
-    setGameState(prevState =>{
-    if (gameState.gameCount > 3) {
-      const randomized = randomizeMatches([...prevState.players]);
-      return{...prevState, players: randomized};
-    }
-    return prevState;
-    });
-  }, [gameState.gameCount]);
-
-  const currentPlayer = gameState.players[gameState.currentTurn];
-
+function GameBoard({ players, variation, currentPlayer, onEndTurn, onPlayAgain }) {
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Teen Patti Game</h1>
-      <CoinPool total={gameState.pool} />
-      <div className="flex flex-wrap gap-4">
-        {gameState.players.map((player, index) => (
-          <PlayerPanel key={index} player={player} isCurrent={index === gameState.currentTurn} />
+    <div className="flex flex-col items-center justify-center min-h-screen bg-green-900 text-white">
+      {/* Game Info */}
+      <div className="mb-6 text-2xl font-semibold text-yellow-300">
+        Playing: {variation.name}
+      </div>
+
+      {/* Circular Player Layout */}
+      <div className="relative w-[700px] h-[700px]">
+        {players.map((player, index) => (
+          <div
+            key={player.name}
+            className="absolute transform -translate-x-1/2 -translate-y-1/2"
+            style={{
+              top: '50%',
+              left: '50%',
+              transform: `translate(-50%, -50%) rotate(${(360 / players.length) * index}deg) translate(250px) rotate(-${(360 / players.length) * index}deg)`,
+            }}
+          >
+            <PlayerPanel player={player} isCurrent={index === currentPlayer} />
+          </div>
         ))}
       </div>
-      <div className="mt-4">
-        <p className="text-lg">
-          It's <span className="font-bold">{currentPlayer?.name}</span>'s turn.
-        </p>
-        <Controls 
-          onPlay={handlePlay} 
-          onPack={handlePack} 
-          onReveal={handleReveal} 
-          currentPlayer={currentPlayer} 
-        />
-      </div>
-      <div className="mt-4">
-        <p className="text-sm">Game Count: {gameState.gameCount}</p>
+
+      {/* Controls */}
+      <div className="mt-8 flex space-x-4">
+        <button
+          onClick={onEndTurn}
+          className="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition duration-200 shadow-md"
+        >
+          End Turn
+        </button>
+        <button
+          onClick={onPlayAgain}
+          className="bg-red-600 text-white px-8 py-3 rounded-full hover:bg-red-700 transition duration-200 shadow-md"
+        >
+          Play Again
+        </button>
       </div>
     </div>
   );
-};
+}
 
 export default GameBoard;

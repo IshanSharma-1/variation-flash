@@ -1,21 +1,32 @@
 import React from 'react';
 
-const PlayerPanel = ({ player, isCurrent }) => {
+function PlayerPanel({ player, isCurrent }) {
   return (
-    <div className={`p-4 border rounded shadow ${isCurrent ? 'bg-green-100' : 'bg-white'}`}>
-      <h3 className="font-bold">{player.name}</h3>
-      <p>Balance: {player.coins}</p>
-      <p>Status: {player.active ? 'Playing' : 'Packed'}</p>
-      {player.isBlind && !player.hasRevealed ? (
-        <p>Cards: [Hidden]</p>
-      ) : (
-        <p>Cards: [Revealed]</p>
-      )}
-      {player.compulsoryBlind && (
-        <p className="text-red-500">Compulsory Blind</p>
-      )}
+    <div className={`p-4 rounded-lg shadow-lg ${isCurrent ? 'border-4 border-yellow-500' : 'border border-gray-500'}`}>
+      <p className="font-bold text-white">{player.name} {player.isHuman ? '(You)' : '(AI)'} (Coins: {player.coins})</p>
+      <div className="flex space-x-2 mt-2">
+        {player.isHuman ? (
+          player.hand.map((card, i) => (
+            <img
+              key={i}
+              src={`/assets/images/${card.rank}_of_${card.suit}.png`}
+              alt={`${card.rank} of ${card.suit}`}
+              className="w-16 h-24 object-contain"
+            />
+          ))
+        ) : (
+          player.hand.map((_, i) => (
+            <img
+              key={i}
+              src={`/assets/images/back.png`}
+              alt="Card back"
+              className="w-16 h-24 object-contain"
+            />
+          ))
+        )}
+      </div>
     </div>
   );
-};
+}
 
 export default PlayerPanel;
