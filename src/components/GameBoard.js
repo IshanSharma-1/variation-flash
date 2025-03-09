@@ -1,26 +1,42 @@
+// src/components/GameBoard.js
 import React from 'react';
 import PlayerPanel from './PlayerPanel';
 import Controls from './Controls';
+import { motion } from 'framer-motion'; // For animations
 
-function GameBoard({ players, currentPlayer, onContinue, onOut, variation, totalPrizePool, gamePhase, onShow, onQuit }) {
-    const activePlayersCount = players.filter((p) => p.active).length;
-    return (
+function GameBoard({
+  players,
+  currentPlayer,
+  onContinue,
+  onOut,
+  variation,
+  prizePool,
+  gamePhase,
+  onShow,
+  onQuit,
+  dealing,
+  dealtHands,
+  showAICards,
+}) {
+  const activePlayersCount = players.filter((p) => p.active).length;
+
+  return (
     <div className="text-center">
-      {/* Display the current variation name */}
       <h1 className="text-4xl text-white mb-8">Teen Patti - {variation.name}</h1>
-      <p className="text-2xl text-yellow-300 mb-4">Total Prize Pool: {totalPrizePool} Coins</p>
+      <p className="text-2xl text-yellow-300 mb-4">Total Prize Pool: {prizePool}</p>
       <div className="grid grid-cols-3 gap-4">
-      {players.map((player, index) => (
-        
-  <PlayerPanel
-    key={index}
-    player={player}
-    isCurrent={index === currentPlayer}
-  />
-))}
+        {players.map((player, index) => (
+          <PlayerPanel
+            key={index}
+            player={player}
+            isCurrent={index === currentPlayer}
+            dealing={dealing}
+            dealtHand={dealtHands[index] || []}
+            showAICards={showAICards}
+          />
+        ))}
       </div>
-       {/* <!-- NEW LOGIC: START --> */}
-       {gamePhase === 'showdown' && activePlayersCount === 2 && players[currentPlayer].isHuman ? (
+      {gamePhase === 'showdown' && activePlayersCount === 2 && players[currentPlayer].isHuman ? (
         <div className="mt-8 flex space-x-4">
           <button
             onClick={onShow}
@@ -48,7 +64,6 @@ function GameBoard({ players, currentPlayer, onContinue, onOut, variation, total
           isHumanTurn={players[currentPlayer].isHuman && players[currentPlayer].active}
         />
       )}
-      {/* <!-- NEW LOGIC: END --> */}
     </div>
   );
 }

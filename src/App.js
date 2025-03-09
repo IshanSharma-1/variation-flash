@@ -1,5 +1,8 @@
+// App.js
 import React, { useState, useEffect } from 'react';
 import GameBoard from './components/GameBoard';
+import WinnerSelectionModal from './components/WinnerSelectionModal';
+import CongratulationsModal from './components/CongratulationsModal';
 import { aiDecisions } from './utils/gameLogic';
 import { createDeck, shuffleDeck, dealCards } from './utils/deck';
 
@@ -25,146 +28,194 @@ const variations = [
 function App() {
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [players, setPlayers] = useState([
-    { name: 'You', coins: 50, hand: [], isHuman: true, active: true },
-    { name: 'AI 1', coins: 50, hand: [], isHuman: false, active: true },
-    { name: 'AI 2', coins: 50, hand: [], isHuman: false, active: true },
+    { name: 'You', coins: 50, hand: [], isHuman: true, active: true, usedCoins: 0 },
+    { name: 'AI 1', coins: 50, hand: [], isHuman: false, active: true, usedCoins: 0 },
+    { name: 'AI 2', coins: 50, hand: [], isHuman: false, active: true, usedCoins: 0 },
   ]);
   const [currentPlayer, setCurrentPlayer] = useState(0);
   const [deck, setDeck] = useState(shuffleDeck(createDeck()));
-
-    // <!-- NEW LOGIC: START -->
-    const [prizePool, setPrizePool] = useState(0); // Track the prize pool
-    const [gamePhase, setGamePhase] = useState('playing'); // 'playing' or 'showdown'
-    // <!-- NEW LOGIC: END -->
+  const [gamePhase, setGamePhase] = useState('playing');
+  const [showAICards, setShowAICards] = useState(false);
+  const [dealing, setDealing] = useState(false);
+  const [dealtHands, setDealtHands] = useState([]);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
+  const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
+  const [winner, setWinner] = useState(null);
+  const prizePool = 150;
 
   // Start a new game with the selected variation
-  const startGame = (variation) => {
+  const startGame = async (variation) => {
     setSelectedVariation(variation);
-    const hands = dealCards(deck, players.length, variation.cards); // Deal cards based on variation
+    const newDeck = shuffleDeck(createDeck());
+    setDeck(newDeck);
+    setDealing(true);
+
+    const hands = dealCards(newDeck, players.length, variation.cards);
+    const tempDealtHands = Array.from({ length: players.length }, () => []);
+    for (let cycle = 0; cycle < variation.cards; cycle++) {
+      for (let playerIndex = 0; playerIndex < players.length; playerIndex++) {
+        if (hands[playerIndex][cycle]) {
+          tempDealtHands[playerIndex].push(hands[playerIndex][cycle]);
+          setDealtHands([...tempDealtHands]);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+    }
+
     const updatedPlayers = players.map((player, index) => ({
       ...player,
-      hand: hands[index] || [], //FIXXXXXXXXXXXXXXXX IF FAILS INDEX]
-      active: true, // Reset all players to active
+      hand: hands[index] || [],
+      active: true,
+      usedCoins: 0,
     }));
     setPlayers(updatedPlayers);
-    setCurrentPlayer(0); // Start with the human player
-    // <!-- NEW LOGIC: START -->
-    setPrizePool(0); // Reset prize pool at the start of the game
-    setGamePhase('playing'); // Reset game phase
-    // <!-- NEW LOGIC: END -->
+    setDealing(false);
+    setCurrentPlayer(0);
+    setGamePhase('playing');
+    setShowAICards(false);
   };
 
   // Handle human player's "Continue" action
   const handleContinue = () => {
     let updatedPlayers = [...players];
-    updatedPlayers[currentPlayer].coins -= 2; // Deduct 2 coins for continuing
+    updatedPlayers[currentPlayer].coins -= 2;
+    updatedPlayers[currentPlayer].usedCoins += 2;
     setPlayers(updatedPlayers);
-    // <!-- NEW LOGIC: START -->
-    setPrizePool(prizePool + 2); // Add to prize pool
-    // <!-- NEW LOGIC: END -->
-    nextTurn(); // Move to the next player
+    nextTurn();
   };
 
   // Handle human player's "Out" action
   const handleOut = () => {
     let updatedPlayers = [...players];
-    updatedPlayers[currentPlayer].active = false; // Mark player as inactive
+    updatedPlayers[currentPlayer].active = false;
     setPlayers(updatedPlayers);
-    // <!-- NEW LOGIC: START -->
     if (activePlayers() === 1) {
       awardPrizeToWinner();
     } else if (activePlayers() === 2) {
-      setGamePhase('showdown'); // Enter showdown phase
+      setGamePhase('showdown');
     }
-    // <!-- NEW LOGIC: END -->
-    nextTurn(); // Move to the next player
+    nextTurn();
   };
 
-   // <!-- NEW LOGIC: START -->
-  // Handle human player's "Show" action (reveal cards)
+  // Handle "Show" action
   const handleShow = () => {
-    // For simplicity, assume the human wins if they show (you can add card comparison logic later)
-    awardPrizeToWinner();
+    if (activePlayers() === 2 && players[currentPlayer].isHuman) {
+      setShowAICards(true);
+      setTimeout(() => setShowWinnerModal(true), 2000);
+    }
+  };
+
+  // Handle winner selection
+  const handleSelectWinner = (winnerIndex) => {
+    setShowWinnerModal(false);
+    let updatedPlayers = [...players];
+    const activePlayersList = updatedPlayers.filter((p) => p.active);
+    const loserIndex = activePlayersList.findIndex((p) => p.name !== updatedPlayers[winnerIndex].name);
+    const coinsWon = updatedPlayers[loserIndex].usedCoins;
+    updatedPlayers[winnerIndex].coins += coinsWon;
+    updatedPlayers[loserIndex].active = false;
+    setPlayers(updatedPlayers);
+    setWinner(updatedPlayers[winnerIndex]);
+    setShowCongratulationsModal(true);
+    setTimeout(() => {
+      setShowCongratulationsModal(false);
+      resetGame();
+    }, 3000);
   };
 
   // Handle human player's "Quit" action
   const handleQuit = () => {
     let updatedPlayers = [...players];
-    updatedPlayers[currentPlayer].active = false; // Mark human as inactive
+    updatedPlayers[currentPlayer].active = false;
     setPlayers(updatedPlayers);
-    awardPrizeToWinner(); // Last remaining player wins
+    awardPrizeToWinner();
   };
-  // <!-- NEW LOGIC: END -->
 
   // Move to the next active player
   const nextTurn = () => {
     let next = (currentPlayer + 1) % players.length;
     while (!players[next].active && activePlayers() > 1) {
-      next = (next + 1) % players.length; // Skip inactive players
+      next = (next + 1) % players.length;
     }
     setCurrentPlayer(next);
   };
 
-  // Count the number of active players
+  // Count active players
   const activePlayers = () => players.filter((p) => p.active).length;
 
-  // <!-- NEW LOGIC: START -->
-  // Award the prize pool to the winner
+  // Award prize to the last remaining player
   const awardPrizeToWinner = () => {
     const winnerIndex = players.findIndex((p) => p.active);
     if (winnerIndex !== -1) {
       let updatedPlayers = [...players];
-      updatedPlayers[winnerIndex].coins += prizePool;
+      const coinsWon = updatedPlayers
+        .filter((p, index) => index !== winnerIndex)
+        .reduce((sum, p) => sum + p.usedCoins, 0);
+      updatedPlayers[winnerIndex].coins += coinsWon;
       setPlayers(updatedPlayers);
-      alert(`${players[winnerIndex].name} wins the prize pool of ${prizePool} coins!`);
+      setWinner(updatedPlayers[winnerIndex]);
+      setShowCongratulationsModal(true);
+      setTimeout(() => {
+        setShowCongratulationsModal(false);
+        resetGame();
+      }, 3000);
     }
-    setGamePhase('ended');
   };
-  // <!-- NEW LOGIC: END -->
 
-  // Handle AI turns automatically
+  // Reset game to variation selection, preserving coin totals
+  const resetGame = () => {
+    setSelectedVariation(null);
+    setGamePhase('playing');
+    setShowAICards(false);
+    setDealtHands([]);
+    setCurrentPlayer(0);
+    setPlayers((prevPlayers) =>
+      prevPlayers.map((player) => ({
+        ...player,
+        hand: [],
+        active: true,
+        usedCoins: 0,
+      }))
+    );
+  };
+
+  // Handle AI turns for all AI players
   useEffect(() => {
     const current = players[currentPlayer];
     if (!current.isHuman && current.active && activePlayers() > 1) {
       const timer = setTimeout(() => {
-        const decisions = aiDecisions(); // Get AI decisions (one continues, one packs)
+        const decisions = aiDecisions(activePlayers());
         let updatedPlayers = [...players];
-        if (currentPlayer === 1) {
-          // AI 1's turn, also decide for AI 2 to ensure they don't decide the same
-          updatedPlayers[1].active = decisions.ai1;
-          updatedPlayers[1].coins -= decisions.ai1 ? 2 : 0; // Deduct coins if continuing
-          // <!-- NEW LOGIC: START -->
-          if (decisions.ai1) setPrizePool(prizePool + 2);
-          // <!-- NEW LOGIC: END -->
-          updatedPlayers[2].active = decisions.ai2;
-          updatedPlayers[2].coins -= decisions.ai2 ? 2 : 0;
-          // <!-- NEW LOGIC: START -->
-          if (decisions.ai2) setPrizePool(prizePool + 2);
-          // <!-- NEW LOGIC: END -->
-        }
+
+        // Apply decisions to all AI players
+        updatedPlayers.forEach((player, index) => {
+          if (!player.isHuman && player.active) {
+            const decision = decisions[`ai${index}`];
+            if (decision) {
+              updatedPlayers[index].coins -= 2;
+              updatedPlayers[index].usedCoins += 2;
+            } else {
+              updatedPlayers[index].active = false;
+            }
+          }
+        });
+
         setPlayers(updatedPlayers);
-        // <!-- NEW LOGIC: START -->
+
         if (activePlayers() === 1) {
           awardPrizeToWinner();
         } else if (activePlayers() === 2) {
           setGamePhase('showdown');
         }
-        // <!-- NEW LOGIC: END -->
         nextTurn();
-      }, 1000); // 1-second delay to simulate AI thinking
-      return () => clearTimeout(timer); // Cleanup timer
+      }, 1000);
+      return () => clearTimeout(timer);
     }
   }, [currentPlayer, players]);
 
-    // <!-- NEW LOGIC: START -->
-  // Calculate the total prize pool (sum of all players' coins)
-  const totalPrizePool = players.reduce((sum, player) => sum + player.coins, 0);
-  // <!-- NEW LOGIC: END -->
-
   return (
-    <div className="min-h-screen bg-gray-800 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-800 flex flex-col items-center justify-center">
       {!selectedVariation ? (
-        // Display variation selection screen
         <div className="text-white">
           <h1 className="text-3xl mb-4">Select a Game Variation</h1>
           <div className="grid grid-cols-3 gap-4">
@@ -180,21 +231,31 @@ function App() {
           </div>
         </div>
       ) : (
-        // Display the game board once a variation is selected
-        <GameBoard
-          players={players}
-          currentPlayer={currentPlayer}
-          onContinue={handleContinue}
-          onOut={handleOut}
-          variation={selectedVariation}
-          totalPrizePool={totalPrizePool}
-           // <!-- NEW LOGIC: START -->
-           prizePool={prizePool}
-           gamePhase={gamePhase}
-           onShow={handleShow}
-           onQuit={handleQuit}
-           // <!-- NEW LOGIC: END -->
-        />
+        <>
+          <GameBoard
+            players={players}
+            currentPlayer={currentPlayer}
+            onContinue={handleContinue}
+            onOut={handleOut}
+            variation={selectedVariation}
+            prizePool={prizePool}
+            gamePhase={gamePhase}
+            onShow={handleShow}
+            onQuit={handleQuit}
+            dealing={dealing}
+            dealtHands={dealtHands}
+            showAICards={showAICards}
+          />
+          {showWinnerModal && (
+            <WinnerSelectionModal
+              players={players.filter((p) => p.active)}
+              onSelectWinner={handleSelectWinner}
+            />
+          )}
+          {showCongratulationsModal && winner && (
+            <CongratulationsModal winner={winner} />
+          )}
+        </>
       )}
     </div>
   );
