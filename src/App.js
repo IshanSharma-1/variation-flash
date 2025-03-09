@@ -107,20 +107,25 @@ function App() {
 
   // Handle winner selection
   const handleSelectWinner = (winnerIndex) => {
+    console.log('Winner selection triggered with index:', winnerIndex);
     setShowWinnerModal(false);
-    let updatedPlayers = [...players];
-    const activePlayersList = updatedPlayers.filter((p) => p.active);
-    const loserIndex = activePlayersList.findIndex((p) => p.name !== updatedPlayers[winnerIndex].name);
-    const coinsWon = updatedPlayers[loserIndex].usedCoins;
-    updatedPlayers[winnerIndex].coins += coinsWon;
-    updatedPlayers[loserIndex].active = false;
-    setPlayers(updatedPlayers);
-    setWinner(updatedPlayers[winnerIndex]);
-    setShowCongratulationsModal(true);
-    setTimeout(() => {
-      setShowCongratulationsModal(false);
-      resetGame();
-    }, 3000);
+    if (winnerIndex !== null) {
+      let updatedPlayers = [...players];
+      const activePlayersList = updatedPlayers.filter((p) => p.active);
+      const loserIndex = activePlayersList.findIndex((p) => p.name !== updatedPlayers[winnerIndex].name);
+      const coinsWon = updatedPlayers[loserIndex].usedCoins;
+      updatedPlayers[winnerIndex].coins += coinsWon;
+      updatedPlayers[loserIndex].active = false;
+      setPlayers(updatedPlayers);
+      setWinner(updatedPlayers[winnerIndex]);
+      console.log('Setting showCongratulationsModal to true');
+      setShowCongratulationsModal(true);
+      setTimeout(() => {
+        console.log('Closing CongratulationsModal');
+        setShowCongratulationsModal(false);
+        resetGame();
+      }, 5000); // Increased to 5 seconds to see confetti
+    }
   };
 
   // Handle human player's "Quit" action
@@ -154,11 +159,13 @@ function App() {
       updatedPlayers[winnerIndex].coins += coinsWon;
       setPlayers(updatedPlayers);
       setWinner(updatedPlayers[winnerIndex]);
+      console.log('Setting showCongratulationsModal to true (awardPrizeToWinner)');
       setShowCongratulationsModal(true);
       setTimeout(() => {
+        console.log('Closing CongratulationsModal (awardPrizeToWinner)');
         setShowCongratulationsModal(false);
         resetGame();
-      }, 3000);
+      }, 5000); // Increased to 5 seconds to see confetti
     }
   };
 
