@@ -1,8 +1,11 @@
-// src/components/GameBoard.js
 import React from 'react';
 import PlayerPanel from './PlayerPanel';
 import Controls from './Controls';
-import { motion } from 'framer-motion'; // For animations
+import ReactionButton from './ReactionButton';
+
+console.log('PlayerPanel:', typeof PlayerPanel);
+console.log('Controls:', typeof Controls);
+console.log('ReactionButton:', typeof ReactionButton);
 
 function GameBoard({
   players,
@@ -35,6 +38,9 @@ function GameBoard({
             showAICards={showAICards}
           />
         ))}
+      </div>
+      <div className="mt-8">
+        <ReactionButton />
       </div>
       {gamePhase === 'showdown' && activePlayersCount === 2 && players[currentPlayer].isHuman ? (
         <div className="mt-8 flex space-x-4">
