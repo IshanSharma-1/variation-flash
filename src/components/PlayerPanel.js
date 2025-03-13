@@ -9,42 +9,39 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
 
   // Calculate coin stacks: 10 coins per stack (row)
   const coinsPerStack = 10;
-  const totalCoins = player.coins || 0; // Ensure coins is a number
-  const numberOfStacks = Math.ceil(totalCoins / coinsPerStack); // Number of stacks needed
+  const totalCoins = player.coins || 0;
+  const numberOfStacks = Math.ceil(totalCoins / coinsPerStack);
   const coinStacks = [];
 
-  // Create stacks of coins
   for (let stack = 0; stack < numberOfStacks; stack++) {
     const coinsInThisStack = Math.min(coinsPerStack, totalCoins - stack * coinsPerStack);
     const coinElements = [];
 
-    // Add coins to the current stack with vertical offset for 3D effect
     for (let i = 0; i < coinsInThisStack; i++) {
       coinElements.push(
         <img
           key={`${stack}-${i}`}
-          src="/assets/coin/coin.png" // Adjust path if the file name differs (e.g., coin.jpg)
+          src="/assets/coin/coin.png"
           alt="Coin"
           className="w-8 h-8 object-contain"
           style={{
             position: 'absolute',
-            top: `${i * 2}px`, // Vertical offset to stack coins (2px per coin for 3D effect)
-            zIndex: coinsInThisStack - i, // Lower coins have higher z-index to appear on top
-            transform: `translateZ(${i * 2}px) rotateX(10deg)`, // Slight 3D rotation
-            filter: 'drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5))', // Enhanced shadow for depth
+            bottom: `${i * 7}px`,
+            zIndex: coinsInThisStack - i,
+            transform: `translateZ(${i * 7}px) rotateX(10deg)`,
+            filter: 'drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5))',
           }}
         />
       );
     }
 
-    // Add the stack to the display (positioned horizontally)
     coinStacks.push(
       <div
         key={stack}
-        className="relative w-8 h-24" // Adjust height based on stack size
+        className="relative w-8 h-24"
         style={{
-          perspective: '500px', // Adds 3D perspective to the stack
-          marginRight: '10px', // Space between stacks
+          perspective: '500px',
+          marginRight: '10px',
         }}
       >
         {coinElements}
@@ -52,9 +49,21 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
     );
   }
 
+  // NEW UPDATE: if player.isBlind === true, always show back.png
+  // Otherwise, if (player.isHuman || showAICards) show real card, else show back.png
+  const getCardSrc = (card) => {
+    if (player.isBlind) {
+      return '/assets/cards/back.png';
+    }
+    if (player.isHuman || showAICards) {
+      return `/assets/cards/${card.rank}_of_${card.suit}.png`;
+    }
+    return '/assets/cards/back.png';
+  };
+
   return (
     <div
-      className={`p-4 rounded-lg shadow-lg ${
+      className={`p-4 rounded-lg shadow-lg aquamorphic-bg transition-transform duration-300 hover:scale-105 ${
         isCurrent && player.active
           ? 'border-4 border-yellow-500 neon-glow'
           : player.active
@@ -73,7 +82,7 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
           dealtHand.map((card, i) => (
             <motion.img
               key={i}
-              src={player.isHuman ? `/assets/cards/${card.rank}_of_${card.suit}.png` : `/assets/cards/back.png`}
+              src={getCardSrc(card)}
               alt={player.isHuman ? `${card.rank} of ${card.suit}` : 'Card back'}
               className="w-16 h-24 object-contain"
               variants={cardVariants}
@@ -86,12 +95,14 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
           (player.hand || []).map((card, i) => (
             <img
               key={i}
-              src={
-                player.isHuman || showAICards
-                  ? `/assets/cards/${card.rank}_of_${card.suit}.png`
-                  : `/assets/cards/back.png`
+              src={getCardSrc(card)}
+              alt={
+                player.isBlind
+                  ? 'Card back'
+                  : player.isHuman || showAICards
+                  ? `${card.rank} of ${card.suit}`
+                  : 'Card back'
               }
-              alt={player.isHuman || showAICards ? `${card.rank} of ${card.suit}` : 'Card back'}
               className="w-16 h-24 object-contain"
             />
           ))
