@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import StartScreen from './components/StartScreen';
 import GameBoard from './components/GameBoard';
 import WinnerSelectionModal from './components/WinnerSelectionModal';
 import CongratulationsModal from './components/CongratulationsModal';
 import { aiDecisions } from './utils/gameLogic';
 import { createDeck, shuffleDeck, dealCards } from './utils/deck';
 
-// Define the 15 game variations with their card counts
 const variations = [
   { name: 'Normal', cards: 3 },
   { name: '3 in Muflis', cards: 3 },
@@ -25,38 +25,12 @@ const variations = [
 ];
 
 function App() {
+  const [showStartScreen, setShowStartScreen] = useState(true);
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [players, setPlayers] = useState([
-    {
-      name: 'You',
-      coins: 50,
-      hand: [],
-      isHuman: true,
-      active: true,
-      usedCoins: 0,
-      isBlind: false,
-      blindCount: 0,
-    },
-    {
-      name: 'AI 1',
-      coins: 50,
-      hand: [],
-      isHuman: false,
-      active: true,
-      usedCoins: 0,
-      isBlind: false,
-      blindCount: 0,
-    },
-    {
-      name: 'AI 2',
-      coins: 50,
-      hand: [],
-      isHuman: false,
-      active: true,
-      usedCoins: 0,
-      isBlind: false,
-      blindCount: 0,
-    },
+    { name: 'You', coins: 50, hand: [], isHuman: true, active: true, usedCoins: 0, isBlind: false, blindCount: 0, hasSeenCards: false, didUserPickBlindUpfront: false, skipTurnThisRound: false },
+    { name: 'AI 1', coins: 50, hand: [], isHuman: false, active: true, usedCoins: 0, isBlind: false, blindCount: 0, hasSeenCards: false, skipTurnThisRound: false },
+    { name: 'AI 2', coins: 50, hand: [], isHuman: false, active: true, usedCoins: 0, isBlind: false, blindCount: 0, hasSeenCards: false, skipTurnThisRound: false },
   ]);
   const [currentPlayer, setCurrentPlayer] = useState(0);
   const [deck, setDeck] = useState(shuffleDeck(createDeck()));
@@ -67,125 +41,134 @@ function App() {
   const [showWinnerModal, setShowWinnerModal] = useState(false);
   const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
   const [winner, setWinner] = useState(null);
-
-  // For the upfront choice of Blind/Seen
   const [blindChoicePhase, setBlindChoicePhase] = useState(false);
+  const [roundCount, setRoundCount] = useState(1);
+  const [playersSkippedInRound1, setPlayersSkippedInRound1] = useState(0);
+  const [showAllCards, setShowAllCards] = useState(false);
+  const [currentRoundPool, setCurrentRoundPool] = useState(0); // New state for tracking round pool
 
   const prizePool = 150;
+  const isAITurnProcessing = useRef(false);
 
-  // Start a new game: let user pick a variation, then pick Blind or Seen
   const startGame = (variation) => {
     setSelectedVariation(variation);
     setBlindChoicePhase(true);
+    setCurrentRoundPool(0); // Reset round pool at game start
   };
 
-  // User picks Blind or Seen at start
   const handleUserBlindChoice = (choice) => {
     setPlayers((prev) => {
       const updated = [...prev];
       const userIndex = 0;
+      let userCoinsDeducted = 0;
+      let aiCoinsDeducted = 0;
+
       if (choice === 'blind') {
-        if (updated[userIndex].blindCount < 2) {
-          updated[userIndex].isBlind = true;
-          updated[userIndex].blindCount += 1;
-        } else {
-          updated[userIndex].isBlind = false;
-        }
+        updated[userIndex].isBlind = true;
+        updated[userIndex].blindCount = 1;
+        updated[userIndex].coins -= 2;
+        updated[userIndex].usedCoins += 2;
+        userCoinsDeducted = 2;
       } else {
+        updated[userIndex].coins -= 1;
+        updated[userIndex].usedCoins += 1;
+        userCoinsDeducted = 1;
         updated[userIndex].isBlind = false;
+        updated[userIndex].hasSeenCards = true;
       }
+      updated[userIndex].skipTurnThisRound = true;
+
+      // Deduct 1 coin from each AI
+      updated.forEach((p, idx) => {
+        if (!p.isHuman && p.active) {
+          p.coins -= 1;
+          p.usedCoins = 1;
+          p.skipTurnThisRound = true;
+          aiCoinsDeducted += 1;
+        }
+      });
+
+      // Update round pool by total deducted
+      setCurrentRoundPool((prevPool) => prevPool + userCoinsDeducted + aiCoinsDeducted);
+
       return updated;
     });
 
-    // AI also picks Blind or Seen if they have blinds left
-    setPlayers((prev) => {
-      return prev.map((player) => {
-        if (!player.isHuman && player.blindCount < 2 && player.active) {
-          const aiChoice = Math.random() < 0.5 ? 'blind' : 'seen';
-          if (aiChoice === 'blind') {
-            player.isBlind = true;
-            player.blindCount += 1;
-          } else {
-            player.isBlind = false;
-          }
-        }
-        return player;
-      });
-    });
-
     setBlindChoicePhase(false);
+    setCurrentPlayer(0);
     distributeCards(selectedVariation);
   };
 
-  // Deal cards after Blind/Seen choices
   const distributeCards = async (variation) => {
     const newDeck = shuffleDeck(createDeck());
     setDeck(newDeck);
     setDealing(true);
-
     const hands = dealCards(newDeck, players.length, variation.cards);
-    const tempDealtHands = Array.from({ length: players.length }, () => []);
-
-    // Deal in cycles so we can show a small animation
+    const tempDealtHands = players.map(() => []);
     for (let cycle = 0; cycle < variation.cards; cycle++) {
       for (let playerIndex = 0; playerIndex < players.length; playerIndex++) {
         if (hands[playerIndex][cycle]) {
           tempDealtHands[playerIndex].push(hands[playerIndex][cycle]);
           setDealtHands([...tempDealtHands]);
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
       }
     }
-
-    const updatedPlayers = players.map((player, index) => ({
-      ...player,
-      hand: hands[index] || [],
-      active: true,
-      usedCoins: 0,
-    }));
-    setPlayers(updatedPlayers);
+    setPlayers((prev) =>
+      prev.map((player, index) => ({
+        ...player,
+        hand: hands[index] || [],
+        active: true,
+      }))
+    );
     setDealing(false);
-    setCurrentPlayer(0);
     setGamePhase('playing');
     setShowAICards(false);
+    setPlayersSkippedInRound1(0);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    nextTurn();
   };
 
-  // Switch to blind again if still have tries
   const handlePlayBlind = () => {
     setPlayers((prev) => {
       const updated = [...prev];
-      const userIndex = currentPlayer;
-      if (updated[userIndex].blindCount < 2) {
-        updated[userIndex].isBlind = true;
-        updated[userIndex].blindCount += 1;
+      if (updated[currentPlayer].blindCount < 2) {
+        updated[currentPlayer].isBlind = true;
+        updated[currentPlayer].blindCount += 1;
+        updated[currentPlayer].coins -= 2;
+        updated[currentPlayer].usedCoins += 2;
+        setCurrentRoundPool(prevPool => prevPool + 2); // Add to round pool
       }
       return updated;
     });
   };
 
-  // Switch to “seen” if currently blind
   const handleSeeCards = () => {
     setPlayers((prev) => {
       const updated = [...prev];
       updated[currentPlayer].isBlind = false;
+      updated[currentPlayer].hasSeenCards = true;
       return updated;
     });
   };
 
-  // “Continue” action
   const handleContinue = () => {
-    let updatedPlayers = [...players];
-    updatedPlayers[currentPlayer].coins -= 2;
-    updatedPlayers[currentPlayer].usedCoins += 2;
-    setPlayers(updatedPlayers);
+    setPlayers((prev) => {
+      const updated = [...prev];
+      updated[currentPlayer].coins -= 2;
+      updated[currentPlayer].usedCoins += 2;
+      setCurrentRoundPool(prevPool => prevPool + 2); // Add to round pool
+      return updated;
+    });
     nextTurn();
   };
 
-  // “Out” action
   const handleOut = () => {
-    let updatedPlayers = [...players];
-    updatedPlayers[currentPlayer].active = false;
-    setPlayers(updatedPlayers);
+    setPlayers((prev) => {
+      const updated = [...prev];
+      updated[currentPlayer].active = false;
+      return updated;
+    });
     if (activePlayers() === 1) {
       awardPrizeToWinner();
     } else if (activePlayers() === 2) {
@@ -194,26 +177,58 @@ function App() {
     nextTurn();
   };
 
-  // “Show” action
+  const handleRevealCards = () => {
+    setPlayers((prev) => {
+      const updated = [...prev];
+      if (updated[currentPlayer].isHuman && !updated[currentPlayer].hasSeenCards) {
+        updated[currentPlayer].isBlind = false;
+        updated[currentPlayer].hasSeenCards = true;
+      }
+      return updated;
+    });
+  };
+
+  const handleBlindShow = () => {
+    if (activePlayers() === 2 && players[currentPlayer].isHuman && !players[currentPlayer].hasSeenCards) {
+      console.log('Blind Show triggered, setting showAllCards to true');
+      setShowAllCards(true);
+      setTimeout(() => setShowWinnerModal(true), 2000);
+    } else {
+      console.log('Blind Show conditions not met:', {
+        activePlayers: activePlayers(),
+        isHuman: players[currentPlayer].isHuman,
+        hasSeenCards: players[currentPlayer].hasSeenCards,
+      });
+    }
+  };
+
   const handleShow = () => {
     if (activePlayers() === 2 && players[currentPlayer].isHuman) {
-      setShowAICards(true);
+      setShowAllCards(true); // Reveal all cards during regular show
       setTimeout(() => setShowWinnerModal(true), 2000);
     }
   };
 
-  // Choose a winner from the showdown
-  const handleSelectWinner = (winnerIndex) => {
+  const handleSelectWinner = (winnerName) => {
     setShowWinnerModal(false);
-    if (winnerIndex !== null) {
-      let updatedPlayers = [...players];
+    if (winnerName !== null) {
+      const updatedPlayers = [...players];
       const activePlayersList = updatedPlayers.filter((p) => p.active);
-      const loserIndex = activePlayersList.findIndex((p) => p.name !== updatedPlayers[winnerIndex].name);
-      const coinsWon = updatedPlayers[loserIndex].usedCoins;
-      updatedPlayers[winnerIndex].coins += coinsWon;
-      updatedPlayers[loserIndex].active = false;
+      if (activePlayersList.length === 2) {
+        const winnerPlayer = activePlayersList.find((p) => p.name === winnerName);
+        const loserPlayer = activePlayersList.find((p) => p.name !== winnerName);
+        if (winnerPlayer && loserPlayer) {
+          const winnerGlobalIndex = updatedPlayers.findIndex((p) => p.name === winnerPlayer.name);
+          updatedPlayers[winnerGlobalIndex].coins += currentRoundPool; // Use current round pool
+          updatedPlayers[winnerGlobalIndex].usedCoins = 0;
+          const loserGlobalIndex = updatedPlayers.findIndex((p) => p.name === loserPlayer.name);
+          updatedPlayers[loserGlobalIndex].active = false;
+          updatedPlayers[loserGlobalIndex].usedCoins = 0;
+        }
+      }
       setPlayers(updatedPlayers);
-      setWinner(updatedPlayers[winnerIndex]);
+      const finalWinner = updatedPlayers.find((p) => p.active);
+      setWinner(finalWinner);
       setShowCongratulationsModal(true);
       setTimeout(() => {
         setShowCongratulationsModal(false);
@@ -222,35 +237,68 @@ function App() {
     }
   };
 
-  // “Quit” action
   const handleQuit = () => {
-    let updatedPlayers = [...players];
-    updatedPlayers[currentPlayer].active = false;
-    setPlayers(updatedPlayers);
+    setPlayers((prev) => {
+      const updated = [...prev];
+      updated[currentPlayer].active = false;
+      return updated;
+    });
     awardPrizeToWinner();
   };
 
-  // Move to next active player
   const nextTurn = () => {
     let next = (currentPlayer + 1) % players.length;
-    while (!players[next].active && activePlayers() > 1) {
+    while (!players[next].active) {
       next = (next + 1) % players.length;
     }
-    setCurrentPlayer(next);
+
+    if (roundCount === 1 && players[next].skipTurnThisRound) {
+      setPlayers((prev) => {
+        const updated = [...prev];
+        updated[next].skipTurnThisRound = false;
+        return updated;
+      });
+      setPlayersSkippedInRound1((prev) => prev + 1);
+      if (playersSkippedInRound1 + 1 === activePlayers()) {
+        setRoundCount(2);
+        setCurrentPlayer(0);
+        setPlayersSkippedInRound1(0);
+      } else {
+        setCurrentPlayer(next);
+      }
+    } else if (players[next].skipTurnThisRound) {
+      setPlayers((prev) => {
+        const updated = [...prev];
+        updated[next].skipTurnThisRound = false;
+        return updated;
+      });
+      next = (next + 1) % players.length;
+      while (!players[next].active) {
+        next = (next + 1) % players.length;
+      }
+      if (next === 0) {
+        setRoundCount((prev) => prev + 1);
+      }
+      setCurrentPlayer(next);
+    } else {
+      if (next === 0) {
+        setRoundCount((prev) => prev + 1);
+      }
+      setCurrentPlayer(next);
+    }
   };
 
-  // Count active players
   const activePlayers = () => players.filter((p) => p.active).length;
 
-  // Award coins to the last player standing
   const awardPrizeToWinner = () => {
     const winnerIndex = players.findIndex((p) => p.active);
     if (winnerIndex !== -1) {
-      let updatedPlayers = [...players];
-      const coinsWon = updatedPlayers
-        .filter((_, idx) => idx !== winnerIndex)
-        .reduce((sum, p) => sum + p.usedCoins, 0);
-      updatedPlayers[winnerIndex].coins += coinsWon;
+      const updatedPlayers = [...players];
+      updatedPlayers[winnerIndex].coins += currentRoundPool; // Use current round pool
+      updatedPlayers[winnerIndex].usedCoins = 0;
+      updatedPlayers.forEach((p, idx) => {
+        if (idx !== winnerIndex) p.usedCoins = 0;
+      });
       setPlayers(updatedPlayers);
       setWinner(updatedPlayers[winnerIndex]);
       setShowCongratulationsModal(true);
@@ -261,63 +309,90 @@ function App() {
     }
   };
 
-  // NEW UPDATE: Reset blindCount in addition to isBlind
   const resetGame = () => {
+    const totalCoins = players.reduce((sum, p) => sum + p.coins, 0);
+    const adjustment = 150 - totalCoins;
+    const coinsPerPlayer = Math.floor((150 + adjustment) / 3);
+
     setSelectedVariation(null);
     setGamePhase('playing');
     setShowAICards(false);
+    setShowAllCards(false);
     setDealtHands([]);
     setCurrentPlayer(0);
-
+    setRoundCount(1);
+    setPlayersSkippedInRound1(0);
+    setCurrentRoundPool(0); // Reset round pool
     setPlayers((prevPlayers) =>
       prevPlayers.map((player) => ({
         ...player,
         hand: [],
         active: true,
+        coins: coinsPerPlayer,
         usedCoins: 0,
         isBlind: false,
-        blindCount: 0, // reset so next game’s blind logic works correctly
+        blindCount: 0,
+        hasSeenCards: false,
+        didUserPickBlindUpfront: false,
+        skipTurnThisRound: false,
       }))
     );
   };
 
-  // AI auto-decisions
+  // AI player turn logic
   useEffect(() => {
     const current = players[currentPlayer];
-    if (!current.isHuman && current.active && activePlayers() > 1) {
+    if (
+      !current.isHuman &&
+      current.active &&
+      activePlayers() > 1 &&
+      !current.skipTurnThisRound &&
+      !isAITurnProcessing.current
+    ) {
+      isAITurnProcessing.current = true;
       const timer = setTimeout(() => {
         const decisions = aiDecisions(activePlayers());
-        let updatedPlayers = [...players];
-
-        updatedPlayers.forEach((player, index) => {
-          if (!player.isHuman && player.active) {
-            const decision = decisions[`ai${index}`];
-            if (decision) {
-              player.coins -= 2;
-              player.usedCoins += 2;
+        setPlayers((prev) => {
+          const updated = [...prev];
+          const p = updated[currentPlayer];
+          if (!p.isHuman && p.active && !p.skipTurnThisRound) {
+            const decision = decisions[`ai${currentPlayer}`];
+            console.log(`AI ${currentPlayer} - Decision: ${decision}`);
+            if (decision && p.coins >= 2) {
+              console.log(`AI ${currentPlayer} - Before deduction: Coins = ${p.coins}, UsedCoins = ${p.usedCoins}, CurrentRoundPool = ${currentRoundPool}`);
+              p.coins -= 2; // Consistently 2 coins for AI
+              p.usedCoins += 2;
+              setCurrentRoundPool((prevPool) => prevPool + 2); // Add to round pool - using functional update
+              console.log(`AI ${currentPlayer} - After deduction: Coins = ${p.coins}, UsedCoins = ${p.usedCoins}, CurrentRoundPool = ${currentRoundPool}`);
             } else {
-              player.active = false;
+              console.log(`AI ${currentPlayer} - Cannot continue, going out: Coins = ${p.coins}, UsedCoins = ${p.usedCoins}`);
+              p.active = false;
             }
           }
+          return updated;
         });
-
-        setPlayers(updatedPlayers);
-
         if (activePlayers() === 1) {
           awardPrizeToWinner();
         } else if (activePlayers() === 2) {
           setGamePhase('showdown');
         }
         nextTurn();
-      }, 1000);
-      return () => clearTimeout(timer);
+        isAITurnProcessing.current = false;
+      }, 1500);
+      return () => {
+        clearTimeout(timer);
+        isAITurnProcessing.current = false;
+      };
     }
   }, [currentPlayer, players]);
 
+  if (showStartScreen) {
+    return <StartScreen onStart={() => setShowStartScreen(false)} />;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-800 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-gray-800 flex flex-col items-center justify-center relative">
       {!selectedVariation ? (
-        // Variation selection
         <div className="text-white">
           <h1 className="text-3xl mb-4">Select a Game Variation</h1>
           <div className="grid grid-cols-3 gap-4">
@@ -333,7 +408,6 @@ function App() {
           </div>
         </div>
       ) : blindChoicePhase ? (
-        // Blind or Seen upfront
         <div className="flex flex-col items-center space-y-4 text-white">
           <h2 className="text-2xl">Do you want to Play Blind or Play Seen?</h2>
           <div className="flex space-x-4">
@@ -352,7 +426,6 @@ function App() {
           </div>
         </div>
       ) : (
-        // Main game flow
         <>
           <GameBoard
             players={players}
@@ -361,7 +434,10 @@ function App() {
             onOut={handleOut}
             variation={selectedVariation}
             prizePool={prizePool}
+            currentRoundPool={currentRoundPool} // Pass the current round pool
             gamePhase={gamePhase}
+            onRevealCards={handleRevealCards}
+            onBlindShow={handleBlindShow}
             onShow={handleShow}
             onQuit={handleQuit}
             dealing={dealing}
@@ -369,6 +445,8 @@ function App() {
             showAICards={showAICards}
             onPlayBlind={handlePlayBlind}
             onSeeCards={handleSeeCards}
+            roundCount={roundCount}
+            showAllCards={showAllCards}
           />
           {showWinnerModal && (
             <WinnerSelectionModal

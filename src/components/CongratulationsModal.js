@@ -17,7 +17,7 @@ const CongratulationsModal = ({ winner }) => {
         numberOfPieces={300} // More pieces for a denser effect
         gravity={0.2} // Slower fall
         wind={0.05} // Slight horizontal drift
-        colors={['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#D4A5A5']} // Same vibrant colors
+        colors={['#FFDF00', '#FFF9C4', '#FFD700', '#FFECB3', '#FFE082', '#FFC107']} // Updated colors
       />
 
       {/* Modal Content */}

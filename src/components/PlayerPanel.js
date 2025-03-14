@@ -1,13 +1,12 @@
 import React from 'react';
-import { motion } from 'framer-motion'; // For animations
+import { motion } from 'framer-motion';
 
-function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
+function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards, showAllCards }) {
   const cardVariants = {
     initial: { y: -100, opacity: 0 },
     animate: { y: 0, opacity: 1 },
   };
 
-  // Calculate coin stacks: 10 coins per stack (row)
   const coinsPerStack = 10;
   const totalCoins = player.coins || 0;
   const numberOfStacks = Math.ceil(totalCoins / coinsPerStack);
@@ -16,7 +15,6 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
   for (let stack = 0; stack < numberOfStacks; stack++) {
     const coinsInThisStack = Math.min(coinsPerStack, totalCoins - stack * coinsPerStack);
     const coinElements = [];
-
     for (let i = 0; i < coinsInThisStack; i++) {
       coinElements.push(
         <img
@@ -34,7 +32,6 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
         />
       );
     }
-
     coinStacks.push(
       <div
         key={stack}
@@ -49,13 +46,20 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
     );
   }
 
-  // NEW UPDATE: if player.isBlind === true, always show back.png
-  // Otherwise, if (player.isHuman || showAICards) show real card, else show back.png
   const getCardSrc = (card) => {
-    if (player.isBlind) {
+    console.log(`getCardSrc for ${player.name}: showAllCards=${showAllCards}, isBlind=${player.isBlind}, isHuman=${player.isHuman}, hasSeenCards=${player.hasSeenCards}`);
+    if (showAllCards) {
+      const src = `/assets/cards/${card.rank}_of_${card.suit}.png`;
+      console.log(`Returning card face: ${src}`);
+      return src;
+    }
+    if (player.isBlind && !player.isHuman) {
       return '/assets/cards/back.png';
     }
-    if (player.isHuman || showAICards) {
+    if (player.isHuman && player.hasSeenCards) {
+      return `/assets/cards/${card.rank}_of_${card.suit}.png`;
+    }
+    if (showAICards && !player.isHuman) {
       return `/assets/cards/${card.rank}_of_${card.suit}.png`;
     }
     return '/assets/cards/back.png';
@@ -65,18 +69,15 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
     <div
       className={`p-4 rounded-lg shadow-lg aquamorphic-bg transition-transform duration-300 hover:scale-105 ${
         isCurrent && player.active
-          ? 'border-4 border-yellow-500 neon-glow'
+          ? 'border-8 border-yellow-500 neon-glow'
           : player.active
           ? 'border border-gray-500'
-          : 'border-4 border-red-500 neon-glow-red'
+          : 'border-8 border-red-500 neon-glow-red'
       }`}
     >
-      {/* Player Name and Coin Count */}
       <p className="font-bold text-white">
         {player.name} {player.isHuman ? '(You)' : '(AI)'} (Coins: {player.coins})
       </p>
-
-      {/* Player Cards */}
       <div className="flex space-x-2 mt-2">
         {dealing ? (
           dealtHand.map((card, i) => (
@@ -97,7 +98,9 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
               key={i}
               src={getCardSrc(card)}
               alt={
-                player.isBlind
+                showAllCards
+                  ? `${card.rank} of ${card.suit}`
+                  : player.isBlind
                   ? 'Card back'
                   : player.isHuman || showAICards
                   ? `${card.rank} of ${card.suit}`
@@ -108,8 +111,6 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAICards }) {
           ))
         )}
       </div>
-
-      {/* 3D Coin Stacks */}
       <div className="mt-4">
         <p className="text-sm text-gray-300">Coin Stack:</p>
         {totalCoins > 0 ? (

@@ -4,27 +4,42 @@ function Controls({
   onContinue,
   onOut,
   isHumanTurn,
-  // NEW UPDATE: new props
   onPlayBlind,
   onSeeCards,
   isUserBlind,
   currentBlindCount,
+  hasSeenCards,
+  roundCount,
+  didUserPickBlindUpfront,
 }) {
-  // If user is already blind, show "See Cards"
-  // If user is not blind, but has used < 2 blinds, show "Play Blind"
-  const canPlayBlind = currentBlindCount < 2 && !isUserBlind;
+  const hideRoundOneControls =
+    isUserBlind && didUserPickBlindUpfront && roundCount === 1;
+  const canPlayBlind = currentBlindCount < 2 && !isUserBlind && !hasSeenCards;
+
+  // If it's not the human's turn, return null (no controls for AI turn)
+  if (!isHumanTurn) {
+    return null;
+  }
 
   return (
     <div className="mt-8 flex space-x-4 justify-center">
-      {isHumanTurn && (
+      {/* If hiding round 1 controls, only show Out button */}
+      {hideRoundOneControls ? (
+        <button
+          onClick={onOut}
+          className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Out
+        </button>
+      ) : (
         <>
-          {/* NEW UPDATE: Blind/Seen buttons */}
+          {/* If user is currently blind, show "See Cards" button; else if allowed, show "Play Blind" */}
           {isUserBlind ? (
             <button
               onClick={onSeeCards}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
             >
-              See Cards
+              Reveal Cards
             </button>
           ) : (
             canPlayBlind && (
@@ -37,12 +52,16 @@ function Controls({
             )
           )}
 
-          <button
-            onClick={onContinue}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            Continue
-          </button>
+          {/* Show "Continue" only if user is not blind */}
+          {!isUserBlind && (
+            <button
+              onClick={onContinue}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              Continue
+            </button>
+          )}
+
           <button
             onClick={onOut}
             className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
