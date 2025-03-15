@@ -24,7 +24,7 @@ const CongratulationsModal = ({ winner }) => {
       <div className="relative bg-gradient-to-br from-green-400 to-blue-600 rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all duration-300 ease-out scale-100 hover:scale-105">
         <h2 className="text-3xl font-bold text-white text-center mb-4">Congratulations!</h2>
         <div className="text-center text-white mb-6">
-          <p className="text-lg">{winner?.name} has won the Royal Deal! 🎉</p>
+          <p className="text-lg">{winner?.name} won the Royal Deal! 🎉</p>
           <p className="mt-2">Enjoy your victory and claim your prize!</p>
         </div>
       </div>

@@ -1,75 +1,52 @@
 import React from 'react';
 
-function Controls({
-  onContinue,
-  onOut,
-  isHumanTurn,
-  onPlayBlind,
-  onSeeCards,
-  isUserBlind,
-  currentBlindCount,
-  hasSeenCards,
-  roundCount,
-  didUserPickBlindUpfront,
-}) {
-  const hideRoundOneControls =
-    isUserBlind && didUserPickBlindUpfront && roundCount === 1;
-  const canPlayBlind = currentBlindCount < 2 && !isUserBlind && !hasSeenCards;
-
-  // If it's not the human's turn, return null (no controls for AI turn)
-  if (!isHumanTurn) {
-    return null;
+function Controls({ player, currentStake, onPlayerAction, currentCycle, activePlayersCount }) {
+  const activeCount = activePlayersCount || 3;
+  const buttons = [];
+  
+  // Only render controls for human player
+  if (!player.isHuman) return null;
+  
+  // If human player is blind, show blind options (after AI turns)
+  if (player.mode === "blind") {
+    buttons.push(
+      { label: `Blind Turn (-${currentStake})`, action: () => onPlayerAction('blind') },
+      { label: `Reveal & Continue (-${2 * currentStake})`, action: () => onPlayerAction('seen') },
+      { label: 'Forfeit', action: () => onPlayerAction('fold') }
+    );
+  } else {
+    // If human player is seen
+    if (activeCount > 2) {
+      buttons.push(
+        { label: `Continue (-${2 * currentStake})`, action: () => onPlayerAction('seen') },
+        { label: 'Forfeit', action: () => onPlayerAction('fold') }
+      );
+    } else {
+      buttons.push(
+        { label: `Continue (-${2 * currentStake})`, action: () => onPlayerAction('seen') },
+        { label: `Show (-${2 * currentStake})`, action: () => onPlayerAction('show') },
+        { label: 'Forfeit', action: () => onPlayerAction('fold') }
+      );
+    }
   }
-
+  
   return (
-    <div className="mt-8 flex space-x-4 justify-center">
-      {/* If hiding round 1 controls, only show Out button */}
-      {hideRoundOneControls ? (
+    <div className="mt-6 flex justify-center space-x-4">
+      {buttons.map((b, idx) => (
         <button
-          onClick={onOut}
-          className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          key={idx}
+          onClick={b.action}
+          className={`px-4 py-2 rounded-lg text-white transition-all duration-200 ${
+            b.label.includes('Forfeit') 
+              ? 'bg-red-600 hover:bg-red-700' 
+              : b.label.includes('Show') 
+                ? 'bg-purple-600 hover:bg-purple-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+          }`}
         >
-          Out
+          {b.label}
         </button>
-      ) : (
-        <>
-          {/* If user is currently blind, show "See Cards" button; else if allowed, show "Play Blind" */}
-          {isUserBlind ? (
-            <button
-              onClick={onSeeCards}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-            >
-              Reveal Cards
-            </button>
-          ) : (
-            canPlayBlind && (
-              <button
-                onClick={onPlayBlind}
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-              >
-                Play Blind
-              </button>
-            )
-          )}
-
-          {/* Show "Continue" only if user is not blind */}
-          {!isUserBlind && (
-            <button
-              onClick={onContinue}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              Continue
-            </button>
-          )}
-
-          <button
-            onClick={onOut}
-            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Out
-          </button>
-        </>
-      )}
+      ))}
     </div>
   );
 }
