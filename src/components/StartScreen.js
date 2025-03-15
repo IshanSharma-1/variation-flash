@@ -226,7 +226,7 @@ function StartScreen({ onStart }) {
     initial: { scale: 1 },
     hover: { 
       scale: 1.05,
-      boxShadow: "0px 0px 25px rgba(255, 215, 0, 0.8)",
+      boxShadow: "0px 0px 25px rgba(212, 175, 55, 0.8)",
       transition: { 
         type: "spring", 
         stiffness: 400, 
@@ -286,13 +286,7 @@ function StartScreen({ onStart }) {
 
       {/* Invisible container with aquamorphic effect */}
       <motion.div 
-        className="w-11/12 md:w-96 text-center p-10 relative z-20 rounded-xl"
-        style={{
-          backgroundColor: "rgba(30, 0, 20, 0.05)",
-          backdropFilter: "blur(12px)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)"
-        }}
+        className="w-11/12 md:w-96 text-center p-10 relative z-20 rounded-xl royal-card"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -300,33 +294,26 @@ function StartScreen({ onStart }) {
       >
         {/* Title with shine effect */}
         <motion.h1 
-          className="font-extrabold mb-8 tracking-wide"
+          className="font-extrabold mb-8 tracking-wide royal-text"
           variants={titleVariants}
           initial="hidden"
           animate="visible"
         >
           <span className="block text-5xl" style={{
-            background: "linear-gradient(to right, #ffecd2 10%, #fcb69f 40%, #ffecd2 60%)",
+            background: "linear-gradient(to right, #d4af37 10%, #fcb69f 40%, #d4af37 60%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundSize: "200% auto",
             animation: "shine 3s linear infinite"
           }}>THE</span>
           <span className="block mt-3 text-7xl" style={{
-            background: "linear-gradient(to right, #ffefba 10%, #ffffff 30%, #ffefba 50%, #ffffff 70%, #ffefba 90%)",
+            background: "linear-gradient(to right, #d4af37 10%, #ffffff 30%, #d4af37 50%, #ffffff 70%, #d4af37 90%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundSize: "200% auto",
             animation: "shine 5s linear infinite",
             textShadow: "0 0 20px rgba(255,255,255,0.2)"
           }}>ROYAL</span>
-          <span className="block mt-3 text-6xl" style={{
-            background: "linear-gradient(to right, #ffecd2 10%, #fcb69f 40%, #ffecd2 60%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundSize: "200% auto",
-            animation: "shine 3s linear infinite"
-          }}>DEAL</span>
         </motion.h1>
         
         {/* Enhanced play button */}

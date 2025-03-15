@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import StartScreen from './components/StartScreen';
+import GameModeSelection from './components/GameModeSelection';
+import CustomMatchSetup from './components/CustomMatchSetup';
 import GameBoard from './components/GameBoard';
 import WinnerSelectionModal from './components/WinnerSelectionModal';
 import CongratulationsModal from './components/CongratulationsModal';
@@ -33,22 +35,20 @@ const variations = [
 ];
 
 function App() {
-  const [showStartScreen, setShowStartScreen] = useState(true);
+  // Game flow states
+  const [gameState, setGameState] = useState('startScreen');
   const [selectedVariation, setSelectedVariation] = useState(null);
-  const [gamePhase, setGamePhase] = useState('setup');
+  const [playerCount, setPlayerCount] = useState(3);
   
-  const [players, setPlayers] = useState([
-    { id: 1, name: 'You', coins: 50, bet: 0, hand: [], isHuman: true, hasFolded: false, isSeen: false, hasSeenCards: false, mode: 'blind' },
-    { id: 2, name: 'AI 1', coins: 50, bet: 0, hand: [], isHuman: false, hasFolded: false, isSeen: true, hasSeenCards: true, mode: 'seen' },
-    { id: 3, name: 'AI 2', coins: 50, bet: 0, hand: [], isHuman: false, hasFolded: false, isSeen: true, hasSeenCards: true, mode: 'seen' }
-  ]);
-  
+  // Game mechanics states
+  const [players, setPlayers] = useState([]);
   const [currentStake, setCurrentStake] = useState(1);
   const [dragMeterValue, setDragMeterValue] = useState(1);
   const [pot, setPot] = useState(0);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [currentCycle, setCurrentCycle] = useState(1);
   
+  // UI states
   const [showWinnerModal, setShowWinnerModal] = useState(false);
   const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
   const [winner, setWinner] = useState(null);
@@ -58,6 +58,48 @@ function App() {
   
   const [deck, setDeck] = useState([]);
   const isAITurnProcessing = useRef(false);
+  
+  // Initialize players based on selected count
+  const initializePlayers = (count) => {
+    const newPlayers = [];
+    
+    // Always add the human player first
+    newPlayers.push({
+      id: 1, 
+      name: 'You', 
+      coins: 50, 
+      bet: 0, 
+      hand: [], 
+      isHuman: true, 
+      hasFolded: false, 
+      isSeen: false, 
+      hasSeenCards: false, 
+      mode: 'blind'
+    });
+    
+    // Add AI players with royal names for better theme
+    const aiNames = [
+      'Baron', 'Duchess', 'Earl', 'Knight', 'Viscount', 
+      'Marquess', 'Count', 'Prince', 'Emperor', 'Duke'
+    ];
+    
+    for (let i = 2; i <= count; i++) {
+      newPlayers.push({
+        id: i,
+        name: aiNames[i-2] || `AI ${i-1}`,
+        coins: 50,
+        bet: 0,
+        hand: [],
+        isHuman: false,
+        hasFolded: false,
+        isSeen: true,
+        hasSeenCards: true,
+        mode: 'seen'
+      });
+    }
+    
+    return newPlayers;
+  };
   
   // Reset game to initial state, preserving coins
   const resetGame = () => {
@@ -77,16 +119,29 @@ function App() {
     setDragMeterValue(1);
     setCurrentPlayerIndex(0);
     setCurrentCycle(1);
-    setGamePhase('setup');
+    setGameState('customMatchSetup');
     setShowAllCards(false);
     setDealtHands([]);
     setWinner(null);
-    setSelectedVariation(null); // Return to variation selection
+    setSelectedVariation(null);
   };
   
-  const startGame = (variation) => {
+  // Handle game mode selection
+  const handleModeSelection = (mode) => {
+    if (mode === 'custom') {
+      setGameState('customMatchSetup');
+    } else if (mode === 'local') {
+      // Local multiplayer not implemented yet
+      alert('Local Multiplayer coming soon!');
+    }
+  };
+  
+  // Handle start of custom match
+  const startCustomMatch = (count, variation) => {
+    setPlayerCount(count);
     setSelectedVariation(variation);
-    setGamePhase('stakeSelection');
+    setPlayers(initializePlayers(count));
+    setGameState('stakeSelection');
   };
   
   const handleStakeChange = (value) => {
@@ -129,7 +184,7 @@ function App() {
     );
     
     setDealing(false);
-    setGamePhase('betting');
+    setGameState('betting');
     setCurrentPlayerIndex(0);
     if (players[0].mode === 'blind' && players[0].isHuman) {
       advanceToNextPlayer(players);
@@ -148,11 +203,10 @@ function App() {
     setCurrentStake(updatedStake);
     setPot(updatedPot);
     
-    // Just add this one extra setShowWinnerModal(true) when 2 players remain
     if (choice === "show" && updatedPlayers.filter(p => !p.hasFolded).length === 2) {
-      setGamePhase('showdown');
+      setGameState('showdown');
       setShowAllCards(true);
-      setShowWinnerModal(true); // ← add this line
+      setShowWinnerModal(true);
     } else {
       advanceToNextPlayer(updatedPlayers);
     }
@@ -191,35 +245,12 @@ function App() {
         setShowCongratulationsModal(false);
         const anyPlayerOut = playersAfterWin.some(p => p.coins <= 0);
         if (anyPlayerOut) {
-          setGamePhase('gameOver');
+          setGameState('gameOver');
         } else {
-          resetGame(); // Return to variation selection
+          resetGame();
         }
       }, 3000);
     }
-  };
-  
-  // Reset for a new round, preserving coins
-  const resetForNewRound = () => {
-    setGamePhase('stakeSelection');
-    setDragMeterValue(1);
-    setCurrentPlayerIndex(0);
-    setCurrentCycle(1);
-    setPot(0);
-    setCurrentStake(1);
-    setShowAllCards(false);
-    
-    setPlayers(prev =>
-      prev.map(player => ({
-        ...player,
-        bet: 0,
-        hand: [],
-        hasFolded: false,
-        isSeen: player.isHuman ? false : true,
-        hasSeenCards: player.isHuman ? false : true,
-        mode: player.isHuman ? 'blind' : 'seen'
-      }))
-    );
   };
   
   const handleSelectWinner = (winnerName) => {
@@ -240,20 +271,20 @@ function App() {
         setShowCongratulationsModal(false);
         const anyPlayerOut = updatedPlayers.some(p => p.coins <= 0);
         if (anyPlayerOut) {
-          setGamePhase('gameOver');
+          setGameState('gameOver');
         } else {
-          resetGame(); // Return to variation selection
+          resetGame();
         }
       }, 3000);
     } else {
       setShowAllCards(false);
-      setGamePhase('betting');
+      setGameState('betting');
     }
   };
   
   useEffect(() => {
     const currentPlayer = players[currentPlayerIndex];
-    if (!currentPlayer?.isHuman && gamePhase === 'betting' && !isAITurnProcessing.current) {
+    if (!currentPlayer?.isHuman && gameState === 'betting' && !isAITurnProcessing.current) {
       isAITurnProcessing.current = true;
       
       setTimeout(() => {
@@ -264,85 +295,105 @@ function App() {
         isAITurnProcessing.current = false;
       }, 1500);
     }
-  }, [currentPlayerIndex, gamePhase, players]);
+  }, [currentPlayerIndex, gameState, players]);
   
-  if (showStartScreen) {
-    return <StartScreen onStart={() => setShowStartScreen(false)} />;
-  }
+  // Create a gradual fading background transition between game states
+  const getBackgroundClass = () => {
+    switch (gameState) {
+      case 'startScreen':
+        return '';
+      case 'modeSelection':
+      case 'customMatchSetup':
+        return 'royal-background';
+      default:
+        return 'game-background';
+    }
+  };
   
-  return (
-    <div className="min-h-screen bg-gray-800 flex flex-col items-center justify-center relative p-4">
-      {!selectedVariation ? (
-        <div className="text-white glassmorphic-bg p-8 rounded-xl">
-          <h1 className="text-3xl mb-8 text-center gold-gradient-text">Select a Game Variation</h1>
-          <div className="grid grid-cols-3 gap-4">
-            {variations.map(variation => (
-              <button
-                key={variation.name}
-                onClick={() => startGame(variation)}
-                className="p-4 bg-gradient-to-r from-blue-800 to-purple-800 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
-              >
-                {variation.name} ({variation.cards} cards)
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <>
-          <GameBoard
-            players={players}
-            currentPlayerIndex={currentPlayerIndex}
-            currentStake={currentStake}
-            dragMeterValue={dragMeterValue}
-            onStakeChange={handleStakeChange}
-            pot={pot}
-            variation={selectedVariation}
-            gamePhase={gamePhase}
-            dealing={dealing}
-            dealtHands={dealtHands}
-            showAllCards={showAllCards}
-            onPlayerAction={handlePlayerAction}
-            currentCycle={currentCycle}
+  // Render based on game state
+  const renderGameState = () => {
+    switch (gameState) {
+      case 'startScreen':
+        return <StartScreen onStart={() => setGameState('modeSelection')} />;
+      
+      case 'modeSelection':
+        return <GameModeSelection onSelectMode={handleModeSelection} />;
+      
+      case 'customMatchSetup':
+        return (
+          <CustomMatchSetup 
+            variations={variations} 
+            onStartCustomMatch={startCustomMatch}
+            onBack={() => setGameState('modeSelection')}
           />
-          
-          {gamePhase === 'stakeSelection' && (
-            <button
-              onClick={handleStakeSelection}
-              className="mt-6 px-8 py-3 bg-green-600 text-white text-xl font-semibold rounded-lg hover:bg-green-700 transition-all duration-200 golden-hover"
-            >
-              Start Round with Stake: {dragMeterValue}
-            </button>
-          )}
-          
-          {showWinnerModal && (
-            <WinnerSelectionModal
-              players={players.filter(p => !p.hasFolded)}
-              onSelectWinner={handleSelectWinner}
+        );
+      
+      case 'stakeSelection':
+      case 'betting':
+      case 'showdown':
+      case 'gameOver':
+        return (
+          <div className="min-h-screen bg-gradient-to-b from-green-900 to-gray-900 flex flex-col items-center justify-center relative p-4">
+            <GameBoard
+              players={players}
+              currentPlayerIndex={currentPlayerIndex}
+              currentStake={currentStake}
+              dragMeterValue={dragMeterValue}
+              onStakeChange={handleStakeChange}
+              pot={pot}
+              variation={selectedVariation}
+              gamePhase={gameState}
+              dealing={dealing}
+              dealtHands={dealtHands}
+              showAllCards={showAllCards}
+              onPlayerAction={handlePlayerAction}
+              currentCycle={currentCycle}
             />
-          )}
-          
-          {showCongratulationsModal && winner && (
-            <CongratulationsModal winner={winner} />
-          )}
-          
-          {gamePhase === 'gameOver' && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-              <div className="glassmorphic-bg p-8 rounded-xl text-center w-full max-w-md">
-                <h2 className="text-2xl mb-4 text-white">Game Over</h2>
-                <p className="text-gray-300 mb-6">One or more players ran out of coins!</p>
-                <button
-                  onClick={resetGame}
-                  className="mt-4 px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 transition-all duration-300"
-                >
-                  Start New Game
-                </button>
+            
+            {gameState === 'stakeSelection' && (
+              <button
+                onClick={handleStakeSelection}
+                className="royal-btn mt-6 px-8 py-3 text-white text-xl font-semibold"
+              >
+                <span className="card-suit suit-spade">♠</span> Start Round with Stake: {dragMeterValue} <span className="card-suit suit-heart">♥</span>
+              </button>
+            )}
+            
+            {showWinnerModal && (
+              <WinnerSelectionModal
+                players={players.filter(p => !p.hasFolded)}
+                onSelectWinner={handleSelectWinner}
+              />
+            )}
+            
+            {showCongratulationsModal && winner && (
+              <CongratulationsModal winner={winner} />
+            )}
+            
+            {gameState === 'gameOver' && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+                <div className="royal-card p-8 rounded-xl text-center w-full max-w-md">
+                  <h2 className="text-2xl mb-4 embossed">Game Over</h2>
+                  <div className="royal-divider"></div>
+                  <p className="text-yellow-200 mb-6">One or more players ran out of coins!</p>
+                  <button
+                    onClick={resetGame}
+                    className="royal-btn mt-4 px-8 py-3"
+                  >
+                    <span className="card-suit suit-club">♣</span> Return to Setup <span className="card-suit suit-diamond">♦</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
+            )}
+          </div>
+        );
+      
+      default:
+        return <StartScreen onStart={() => setGameState('modeSelection')} />;
+    }
+  };
+  
+  return <div className={getBackgroundClass()}>{renderGameState()}</div>;
 }
 
 export default App;

@@ -2,13 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Royal poker themed styles */
+:root {
+  --royal-gold: #d4af37;
+  --royal-red: #8b0000;
+  --royal-blue: #000080;
+  --royal-green: #013220;
+  --card-felt: #0c3b0c;
+}
+
 /* Radial gradient background with subtle particle glow */
 body {
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Montserrat', 'Segoe UI', sans-serif;
   background: radial-gradient(circle at center, #0c280c 0%, #032103 80%, #001a00 100%);
   position: relative;
   overflow-x: hidden;
+}
+
+/* Royal headings */
+h1, h2, h3, h4, .royal-text {
+  font-family: 'Playfair Display', serif !important;
+  letter-spacing: 0.02em;
 }
 
 /* Particle effect */
@@ -33,11 +48,11 @@ body {
 
 /* Neon glow classes with !important added to prevent overrides */
 .neon-glow {
-  box-shadow: 0 0 10px #ffd700 !important, 0 0 20px #ffd700 !important, 0 0 30px #ffd700 !important, 0 0 40px #ffd700 !important;
+  box-shadow: 0 0 10px var(--royal-gold) !important, 0 0 20px var(--royal-gold) !important, 0 0 30px var(--royal-gold) !important;
 }
 
 .neon-glow-red {
-  box-shadow: 0 0 10px #ff0000 !important, 0 0 20px #ff0000 !important, 0 0 30px #ff0000 !important, 0 0 40px #ff0000 !important;
+  box-shadow: 0 0 10px var(--royal-red) !important, 0 0 20px var(--royal-red) !important, 0 0 30px var(--royal-red) !important;
 }
 
 /* Animated background particles */
@@ -58,22 +73,61 @@ body {
 
 /* Gold gradient text */
 .gold-gradient-text {
-  background: linear-gradient(to right, #FFD700, #ECC94B);
+  background: linear-gradient(to right, var(--royal-gold), #f8df8c);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
+/* Royal button styles */
+.royal-btn {
+  @apply relative overflow-hidden py-3 px-6 rounded-lg font-medium transition-all duration-300;
+  background: linear-gradient(135deg, #8b0000, #6b0000);
+  border: 1px solid var(--royal-gold);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.royal-btn:hover {
+  @apply transform scale-105;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5), 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.royal-btn:active {
+  @apply transform scale-95;
+}
+
+.royal-btn-alt {
+  @apply relative overflow-hidden py-3 px-6 rounded-lg font-medium transition-all duration-300;
+  background: linear-gradient(135deg, #000080, #000060);
+  border: 1px solid var(--royal-gold);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.royal-btn-alt:hover {
+  @apply transform scale-105;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5), 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
 /* Glassmorphic effect for modals and panels */
 .glassmorphic-bg {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(12, 28, 12, 0.7);
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 1rem;
+}
+
+.royal-card {
+  background-color: rgba(30, 0, 20, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--royal-gold);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   border-radius: 1rem;
 }
 
 .animated-bg {
-  background: linear-gradient(270deg, #ffecd2, #fcb69f);
+  background: linear-gradient(270deg, #0c280c, #032103);
   background-size: 400% 400%;
   animation: gradient 15s ease infinite;
 }
@@ -92,12 +146,55 @@ body {
 
 /* Glowing hover for buttons */
 .golden-hover:hover {
-  box-shadow: 0 0 8px 4px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 8px 4px rgba(212, 175, 55, 0.6);
   transition: box-shadow 0.3s ease-in-out;
 }
 
-/* Ensure headings and paragraphs use our modern sans-serif */
-h1, h2, h3, p {
-  font-family: 'Segoe UI', sans-serif;
+/* Card suit icons */
+.card-suit {
+  display: inline-block;
+  font-size: 1.25em;
+  vertical-align: middle;
+  line-height: 1;
 }
 
+.suit-heart, .suit-diamond {
+  color: var(--royal-red);
+}
+
+.suit-club, .suit-spade {
+  color: #000;
+}
+
+/* Embossed text effect */
+.embossed {
+  text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.3), 
+               0px -1px 1px rgba(0, 0, 0, 0.7);
+  color: #d4af37;
+}
+
+/* Decorative dividers */
+.royal-divider {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--royal-gold), transparent);
+  margin: 1.5rem 0;
+}
+
+.royal-divider::before,
+.royal-divider::after {
+  content: "♦";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  color: var(--royal-gold);
+  background: rgba(12, 28, 12, 0.8);
+  padding: 0 1rem;
+}
+
+/* Shiny animation */
+@keyframes shine {
+  from { background-position: 0% center; }
+  to { background-position: 200% center; }
+}
