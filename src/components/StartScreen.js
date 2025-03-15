@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import GameManual from './GameManual'; // We'll create this component next
 
 // Card suit symbols for explosion effect
 const suitSymbols = {
@@ -18,6 +19,8 @@ const suitColors = {
 };
 
 function StartScreen({ onStart }) {
+  const [showManual, setShowManual] = useState(false);
+  
   // Fix #1: Use window dimensions state to handle window resizing
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
@@ -305,7 +308,7 @@ function StartScreen({ onStart }) {
             WebkitTextFillColor: "transparent",
             backgroundSize: "200% auto",
             animation: "shine 3s linear infinite"
-          }}>THE</span>
+          }}>Variation</span>
           <span className="block mt-3 text-7xl" style={{
             background: "linear-gradient(to right, #d4af37 10%, #ffffff 30%, #d4af37 50%, #ffffff 70%, #d4af37 90%)",
             WebkitBackgroundClip: "text",
@@ -313,13 +316,13 @@ function StartScreen({ onStart }) {
             backgroundSize: "200% auto",
             animation: "shine 5s linear infinite",
             textShadow: "0 0 20px rgba(255,255,255,0.2)"
-          }}>ROYAL</span>
+          }}>Flash</span>
         </motion.h1>
         
         {/* Enhanced play button */}
         <motion.button
           onClick={onStart}
-          className="px-12 py-4 text-2xl font-semibold rounded-full relative overflow-hidden mt-6"
+          className="px-12 py-4 text-2xl font-semibold rounded-full relative overflow-hidden mt-6 w-full"
           style={{
             background: "linear-gradient(to right, #603813, #b29f94)",
             boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)"
@@ -351,6 +354,25 @@ function StartScreen({ onStart }) {
             }}
           />
           <span className="relative z-10 text-white">PLAY NOW</span>
+        </motion.button>
+        
+        {/* Game Manual Button - NEW ADDITION */}
+        <motion.button
+          onClick={() => setShowManual(true)}
+          className="px-6 py-3 text-lg font-semibold rounded-lg relative overflow-hidden mt-4 w-full"
+          style={{
+            background: "linear-gradient(to right, #000060, #0c280c)",
+            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.3)",
+            border: "1px solid var(--royal-gold)"
+          }}
+          variants={buttonVariants}
+          initial="initial"
+          whileHover="hover"
+          whileTap="tap"
+        >
+          <span className="card-suit suit-spade mr-2">♠</span>
+          <span className="relative z-10 text-white">GAME GUIDE</span>
+          <span className="card-suit suit-heart ml-2">♥</span>
         </motion.button>
 
         {/* Version tag */}
@@ -391,6 +413,13 @@ function StartScreen({ onStart }) {
           filter: "blur(40px)"
         }}
       />
+      
+      {/* Game Manual Modal */}
+      <AnimatePresence>
+        {showManual && (
+          <GameManual onClose={() => setShowManual(false)} />
+        )}
+      </AnimatePresence>
       
       {/* Fix for the JSX attribute warning */}
       <style>

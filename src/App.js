@@ -119,11 +119,13 @@ function App() {
     setDragMeterValue(1);
     setCurrentPlayerIndex(0);
     setCurrentCycle(1);
+    // Send player to customMatchSetup but retain player count
     setGameState('customMatchSetup');
     setShowAllCards(false);
     setDealtHands([]);
     setWinner(null);
     setSelectedVariation(null);
+    // Don't reset playerCount here - keep it the same
   };
   
   // Handle game mode selection
@@ -325,6 +327,7 @@ function App() {
             variations={variations} 
             onStartCustomMatch={startCustomMatch}
             onBack={() => setGameState('modeSelection')}
+            players={players} // Pass players to detect returning player
           />
         );
       
@@ -348,16 +351,8 @@ function App() {
               showAllCards={showAllCards}
               onPlayerAction={handlePlayerAction}
               currentCycle={currentCycle}
+              handleStakeSelection={handleStakeSelection} // Add this line to pass the function
             />
-            
-            {gameState === 'stakeSelection' && (
-              <button
-                onClick={handleStakeSelection}
-                className="royal-btn mt-6 px-8 py-3 text-white text-xl font-semibold"
-              >
-                <span className="card-suit suit-spade">♠</span> Start Round with Stake: {dragMeterValue} <span className="card-suit suit-heart">♥</span>
-              </button>
-            )}
             
             {showWinnerModal && (
               <WinnerSelectionModal

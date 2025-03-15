@@ -8,22 +8,34 @@ export const aiDecisions = (activePlayersCount) => {
   return decisions;
 };
 
-export function upfrontDeduction(players, currentStake) {
+// Function to deduct initial amount from player
+export const upfrontDeduction = (players, currentStake) => {
+  const updatedPlayers = [...players];
   let pot = 0;
-  const updatedPlayers = players.map(p => {
-    let deduction = 1;
-    if (p.mode === 'blind' && p.isHuman) {
-      deduction = 2;
-      p.skipCycle = true;
+  
+  updatedPlayers.forEach((player) => {
+    // Calculate the upfront amount based on player mode and current stake
+    let upfrontAmount;
+    
+    if (player.mode === 'blind') {
+      // For blind players: stake + 1 coin
+      upfrontAmount = currentStake + 1;
+    } else {
+      // For seen players: stake * 2
+      upfrontAmount = currentStake * 2;
     }
-    deduction = Math.min(deduction, p.coins);
-    p.coins -= deduction;
-    p.bet = deduction;
-    pot += deduction;
-    return p;
+    
+    // Ensure player doesn't pay more than they have
+    const actualDeduction = Math.min(player.coins, upfrontAmount);
+    
+    // Update player state
+    player.coins -= actualDeduction;
+    player.bet += actualDeduction;
+    pot += actualDeduction;
   });
+  
   return { updatedPlayers, pot };
-}
+};
 
 export function initializeRound(players, dragMeterValue) {
   let validStake = Math.min(dragMeterValue, 3);
@@ -48,52 +60,62 @@ export function initializeRound(players, dragMeterValue) {
   };
 }
 
-export function processPlayerTurn(players, currentPlayerIndex, choice, currentStake, pot) {
+// Process player's turn action
+export const processPlayerTurn = (players, currentPlayerIndex, choice, currentStake, pot) => {
   const updatedPlayers = [...players];
-  const player = updatedPlayers[currentPlayerIndex];
+  let updatedPot = pot;
+  let updatedStake = currentStake;
+  const currentPlayer = updatedPlayers[currentPlayerIndex];
   
-  if (choice === "fold") {
-    player.hasFolded = true;
-    return { players: updatedPlayers, currentStake, pot };
-  }
-  
-  if (choice === "blind" && player.mode === "blind" && player.isHuman) {
-    let turnBet = 1;
-    if (player.coins < turnBet) turnBet = player.coins;
-    player.bet += turnBet;
-    player.coins -= turnBet;
-    pot += turnBet;
-    return { players: updatedPlayers, currentStake, pot };
-  }
-  
-  if (choice === "seen" || choice === "show") {
-    const seenTurnBet = 2;
-    if (player.mode === "blind" && player.isHuman) {
-      let additional = seenTurnBet - 1;
-      if (player.coins < additional) additional = player.coins;
-      player.bet += additional;
-      player.coins -= additional;
-      pot += additional;
-      player.mode = "seen";
-      player.isSeen = true;
-      player.hasSeenCards = true;
-    } else {
-      let turnBet = seenTurnBet;
-      if (player.coins < turnBet) turnBet = player.coins;
-      player.bet += turnBet;
-      player.coins -= turnBet;
-      pot += turnBet;
-    }
+  switch (choice) {
+    case "blind":
+      // Blind action costs currentStake
+      if (currentPlayer.coins >= currentStake) {
+        currentPlayer.coins -= currentStake;
+        currentPlayer.bet += currentStake;
+        updatedPot += currentStake;
+      }
+      break;
     
-    if (choice === "show") {
-      player.actionType = "show";
-    }
+    case "seen":
+      // Reveal cards, change mode to seen if not already
+      if (currentPlayer.mode === "blind") {
+        currentPlayer.mode = "seen";
+        currentPlayer.isSeen = true;
+        // No additional coins needed here since this is just changing the mode
+      }
+      
+      // Seen action costs 2 * currentStake
+      if (currentPlayer.coins >= currentStake * 2) {
+        currentPlayer.coins -= currentStake * 2;
+        currentPlayer.bet += currentStake * 2;
+        updatedPot += currentStake * 2;
+      }
+      break;
     
-    return { players: updatedPlayers, currentStake, pot };
+    case "show":
+      // For "show" case, same behavior as "seen" in terms of betting
+      if (currentPlayer.coins >= currentStake * 2) {
+        currentPlayer.coins -= currentStake * 2;
+        currentPlayer.bet += currentStake * 2;
+        updatedPot += currentStake * 2;
+      }
+      break;
+    
+    case "fold":
+      currentPlayer.hasFolded = true;
+      break;
+    
+    default:
+      console.error("Unknown choice:", choice);
   }
   
-  return { players: updatedPlayers, currentStake, pot };
-}
+  return {
+    players: updatedPlayers,
+    currentStake: updatedStake,
+    pot: updatedPot
+  };
+};
 
 export function determineWinnerAndDistributePot(players, pot) {
   const activePlayers = players.filter(p => !p.hasFolded);
