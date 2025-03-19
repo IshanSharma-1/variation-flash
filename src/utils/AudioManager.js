@@ -4,14 +4,17 @@
 const audioFiles = {
   oneCoin: new Audio(process.env.PUBLIC_URL + '/assets/sound/oneCoin.mp3'),
   twoCoins: new Audio(process.env.PUBLIC_URL + '/assets/sound/twoCoins.mp3'),
-  congrats: new Audio(process.env.PUBLIC_URL + '/assets/sound/win.mp3'),
+  congrats: new Audio(process.env.PUBLIC_URL + '/assets/sound/congrats.mp3'), // Changed from win.mp3
   start: new Audio(process.env.PUBLIC_URL + '/assets/sound/start.mp3'),
-  ambient: new Audio(process.env.PUBLIC_URL + '/assets/sound/ambient.mp3')
+  ambient: new Audio(process.env.PUBLIC_URL + '/assets/sound/ambient.mp3'),
+  lobby: new Audio(process.env.PUBLIC_URL + '/assets/sound/lobby.mp3'),
+  cardDistribute: new Audio(process.env.PUBLIC_URL + '/assets/sound/cardDistribute.mp3')
 };
 
 // Set loop properties
 audioFiles.start.loop = true;
 audioFiles.ambient.loop = true;
+audioFiles.lobby.loop = true;
 
 // Preload all sounds
 Object.values(audioFiles).forEach(audio => {
@@ -37,8 +40,8 @@ export const playCoinSound = (amount) => {
 export const playWinSequence = (onComplete = () => {}) => {
   try {
     if (!audioFiles.congrats) {
-      console.log('Win audio not loaded yet, creating new Audio');
-      audioFiles.congrats = new Audio(process.env.PUBLIC_URL + '/assets/sound/win.mp3');
+      console.log('Congrats audio not loaded yet, creating new Audio');
+      audioFiles.congrats = new Audio(process.env.PUBLIC_URL + '/assets/sound/congrats.mp3'); // Changed from win.mp3
     }
     
     audioFiles.congrats.currentTime = 0;
@@ -80,7 +83,7 @@ export const playWinSequence = (onComplete = () => {}) => {
         });
     });
   } catch (error) {
-    console.log('Error in win sequence:', error);
+    console.log('Error in congrats sequence:', error); // Updated error message
     setTimeout(onComplete, 1000);
     return Promise.reject(error);
   }
@@ -89,7 +92,7 @@ export const playWinSequence = (onComplete = () => {}) => {
 // Start music controls
 export const playStartMusic = () => {
   try {
-    // Ensure ambient music is stopped when start music plays
+    // Ensuring ambient music is stopped when start music plays
     stopAmbientMusic();
     
     audioFiles.start.currentTime = 0;
@@ -181,5 +184,39 @@ export const stopAmbientMusic = () => {
   } catch (err) {
     console.log('Error stopping ambient music:', err);
     return false;
+  }
+};
+
+// Add new functions for lobby and card distribution sounds
+export const playLobbyMusic = () => {
+  try {
+    stopStartMusic();
+    stopAmbientMusic();
+    audioFiles.lobby.currentTime = 0;
+    return audioFiles.lobby.play();
+  } catch (err) {
+    console.log('Error playing lobby music:', err);
+    return Promise.reject(err);
+  }
+};
+
+export const stopLobbyMusic = () => {
+  try {
+    if (audioFiles.lobby && !audioFiles.lobby.paused) {
+      audioFiles.lobby.pause();
+      audioFiles.lobby.currentTime = 0;
+    }
+  } catch (err) {
+    console.log('Error stopping lobby music:', err);
+  }
+};
+
+export const playCardDistributeSound = () => {
+  try {
+    audioFiles.cardDistribute.currentTime = 0;
+    return audioFiles.cardDistribute.play();
+  } catch (err) {
+    console.log('Error playing card distribute sound:', err);
+    return Promise.reject(err);
   }
 };

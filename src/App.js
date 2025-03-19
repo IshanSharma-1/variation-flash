@@ -14,7 +14,7 @@ import {
   getAIDecision
 } from './utils/gameLogic';
 import { createDeck, shuffleDeck, dealCards } from './utils/deck';
-import { playCoinSound, playWinSequence, stopStartMusic, playAmbientMusic, stopAmbientMusic } from './utils/AudioManager';
+import { playCoinSound, playWinSequence, stopStartMusic, playAmbientMusic, stopAmbientMusic, playLobbyMusic, playCardDistributeSound, stopLobbyMusic } from './utils/AudioManager';
 
 // Game variations
 const variations = [
@@ -180,7 +180,9 @@ const handleStakeSelection = (mode = 'blind') => {
         if (hands[playerIndex][cycle]) {
           tempDealtHands[playerIndex].push(hands[playerIndex][cycle]);
           setDealtHands([...tempDealtHands]);
-          // Increased delay between each card distribution
+          // Play card distribute sound for each card
+          await playCardDistributeSound();
+          // Wait for sound to finish
           await new Promise(resolve => setTimeout(resolve, 400));
         }
       }
@@ -193,11 +195,15 @@ const handleStakeSelection = (mode = 'blind') => {
       }))
     );
     
-    // Add a final delay before moving to betting phase
     await new Promise(resolve => setTimeout(resolve, 600));
     setDealing(false);
     setGameState('betting');
     setCurrentPlayerIndex(0);
+    
+    // Start ambient music when dealing is complete
+    stopLobbyMusic();
+    playAmbientMusic();
+    
     if (players[0].mode === 'blind' && players[0].isHuman) {
       advanceToNextPlayer(players);
     }
@@ -385,6 +391,38 @@ const handleStakeSelection = (mode = 'blind') => {
       stopAmbientMusic();
     }
   }, [gameState]);
+  
+  useEffect(() => {
+    switch (gameState) {
+      case 'modeSelection':
+      case 'customMatchSetup':
+        // Play lobby music when entering these screens
+        playLobbyMusic();
+        break;
+        
+      case 'showdown':
+        // Stop ambient music when showing winner
+        stopAmbientMusic();
+        break;
+        
+      case 'betting':
+        // Ensure ambient music is playing during the game
+        if (!dealing) {
+          playAmbientMusic();
+        }
+        break;
+        
+      default:
+        break;
+    }
+    
+    // Cleanup function
+    return () => {
+      if (gameState === 'showdown') {
+        stopAmbientMusic();
+      }
+    };
+  }, [gameState, dealing]);
   
   // Create a gradual fading background transition between game states
   const getBackgroundClass = () => {
