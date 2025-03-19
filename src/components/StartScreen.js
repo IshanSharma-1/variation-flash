@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GameManual from './GameManual'; // We'll create this component next
+import { playStartMusic, stopStartMusic } from '../utils/AudioManager';
 
 // Card suit symbols for explosion effect
 const suitSymbols = {
@@ -18,110 +19,83 @@ const suitColors = {
   spades: '#ffffff'
 };
 
+// Global interaction tracker
+let hasUserInteracted = false;
+
 function StartScreen({ onStart }) {
   const [showManual, setShowManual] = useState(false);
-  
-  // Fix #1: Use window dimensions state to handle window resizing
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false); // Add missing state for music playing
+  const [explosionTrigger, setExplosionTrigger] = useState(0);
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight
   });
-  
-  // Fix #2: Improve audio with better initialization and error handling
+
+
+  // Handle audio during state transitions
   useEffect(() => {
-    // Create a proper audio context and element
-    const audioElement = new Audio();
-    audioElement.src = process.env.PUBLIC_URL + '/assets/bg/start.mp3';
-    audioElement.loop = true;
-    audioElement.volume = 1.0; // Full volume
-    audioElement.preload = 'auto';
-    
-    // Check if audio is loaded
-    audioElement.addEventListener('canplaythrough', () => {
-      console.log('Audio loaded and ready to play');
-    });
-    
-    // Error handling
-    audioElement.addEventListener('error', (e) => {
-      console.error('Audio error:', e);
-      console.error('Audio error code:', audioElement.error?.code);
-      console.error('Audio src:', audioElement.src);
-    });
-    
-    // Function to play audio with better user interaction handling
-    const playAudio = () => {
-      console.log('Attempting to play audio...');
-      const playPromise = audioElement.play();
-      
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            console.log('Audio playback started successfully');
-          })
-          .catch(error => {
-            console.warn('Auto-play was prevented:', error);
-            
-            // Create a visible play button for user interaction
-            const playButton = document.createElement('button');
-            playButton.innerHTML = '🔊 Enable Sound';
-            playButton.style.position = 'fixed';
-            playButton.style.bottom = '20px';
-            playButton.style.right = '20px';
-            playButton.style.zIndex = '9999';
-            playButton.style.padding = '10px 15px';
-            playButton.style.backgroundColor = 'rgba(0,0,0,0.5)';
-            playButton.style.color = 'white';
-            playButton.style.border = 'none';
-            playButton.style.borderRadius = '5px';
-            playButton.style.cursor = 'pointer';
-            
-            playButton.onclick = () => {
-              audioElement.play()
-                .then(() => {
-                  document.body.removeChild(playButton);
-                })
-                .catch(e => console.error('Still cannot play audio:', e));
-            };
-            
-            document.body.appendChild(playButton);
-          });
+    // Simple play attempt when component mounts
+    const attemptPlayMusic = async () => {
+      try {
+        await playStartMusic();
+        setIsMusicPlaying(true);
+      } catch (error) {
+        console.log('Initial music play failed, waiting for user interaction');
+        
+        // Set up a one-time listener for first interaction
+        const handleInteraction = () => {
+          playStartMusic()
+            .then(() => setIsMusicPlaying(true))
+            .catch(err => console.log('Still failed to play music:', err));
+          
+          document.removeEventListener('click', handleInteraction);
+          document.removeEventListener('touchstart', handleInteraction);
+        };
+        
+        document.addEventListener('click', handleInteraction, {once: true});
+        document.addEventListener('touchstart', handleInteraction, {once: true});
       }
     };
     
-    // Try to play immediately
-    playAudio();
+    attemptPlayMusic();
     
-    // Also play on user interaction
-    const handleUserInteraction = () => {
-      playAudio();
-      // Remove the event listeners after first interaction
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
+    // Clean up on unmount
+    return () => {
+      if (isMusicPlaying) {
+        stopStartMusic();
+      }
     };
-    
-    document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('touchstart', handleUserInteraction);
-    
-    // Fix #1: Update window dimensions on resize
+  }, [isMusicPlaying]);
+
+  // Handle window resize
+  useEffect(() => {
     const handleResize = () => {
       setWindowSize({
         width: window.innerWidth,
         height: window.innerHeight
       });
     };
-    
+
     window.addEventListener('resize', handleResize);
-    
-    // Cleanup
+
     return () => {
-      audioElement.pause();
-      audioElement.src = '';
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  
+
+  // Handle navigation and stop music safely
+  const handleStart = () => {
+    try {
+      console.log('Start button clicked, stopping music...');
+      stopStartMusic(); // This should completely stop the music
+    } catch (error) {
+      console.log('Error stopping music:', error);
+    }
+    
+    // Navigate immediately - no need for a timeout
+    onStart();
+  };
+
   // State for dynamic background colors
   const [backgroundColors, setBackgroundColors] = useState({
     from: 'hsl(330, 50%, 8%)',
@@ -130,7 +104,6 @@ function StartScreen({ onStart }) {
   });
   
   // MODIFIED SUIT EXPLOSION EFFECT - BOTTOM TO TOP BURST
-  const [explosionTrigger, setExplosionTrigger] = useState(0);
   const suitParticles = useMemo(() => {
     // Define screen dimensions
     const { width, height } = windowSize;
@@ -321,7 +294,7 @@ function StartScreen({ onStart }) {
         
         {/* Enhanced play button */}
         <motion.button
-          onClick={onStart}
+          onClick={handleStart}  // Changed from onStart to handleStart
           className="px-12 py-4 text-2xl font-semibold rounded-full relative overflow-hidden mt-6 w-full"
           style={{
             background: "linear-gradient(to right, #603813, #b29f94)",

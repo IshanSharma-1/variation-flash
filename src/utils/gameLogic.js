@@ -8,21 +8,21 @@ export const aiDecisions = (activePlayersCount) => {
   return decisions;
 };
 
-// Function to deduct initial amount from player
+// Update upfrontDeduction to implement the different upfront costs
+
+// Function to deduct initial amount from players
 export const upfrontDeduction = (players, currentStake) => {
   const updatedPlayers = [...players];
   let pot = 0;
   
+  // Deduct upfront costs from each player
   updatedPlayers.forEach((player) => {
-    // Calculate the upfront amount based on player mode and current stake
-    let upfrontAmount;
-    
-    if (player.mode === 'blind') {
-      // For blind players: stake + 1 coin
-      upfrontAmount = currentStake + 1;
-    } else {
-      // For seen players: stake * 2
-      upfrontAmount = currentStake * 2;
+    // Calculate upfront amount based on player mode
+    // Blind player pays currentStake + 1
+    // Seen players (AI) pay currentStake
+    let upfrontAmount = currentStake;
+    if (player.isHuman && player.mode === 'blind') {
+      upfrontAmount += 1; // Add 1 extra coin for blind human player
     }
     
     // Ensure player doesn't pay more than they have
@@ -37,7 +37,8 @@ export const upfrontDeduction = (players, currentStake) => {
   return { updatedPlayers, pot };
 };
 
-export function initializeRound(players, dragMeterValue) {
+// Update the initializeRound function to accept player mode
+export function initializeRound(players, dragMeterValue, humanPlayerMode = 'blind') {
   let validStake = Math.min(dragMeterValue, 3);
   const minBalance = Math.min(...players.map(p => p.coins));
   if (minBalance < validStake) {
@@ -48,9 +49,10 @@ export function initializeRound(players, dragMeterValue) {
     ...p,
     bet: 0,
     hasFolded: false,
-    isSeen: p.isHuman ? false : true,
-    hasSeenCards: p.isHuman ? false : true,
-    mode: p.isHuman ? 'blind' : 'seen'
+    // Human player gets the selected mode, AI players are always seen
+    isSeen: p.isHuman ? (humanPlayerMode === 'seen') : true,
+    hasSeenCards: p.isHuman ? (humanPlayerMode === 'seen') : true,
+    mode: p.isHuman ? humanPlayerMode : 'seen'
   }));
   
   return {

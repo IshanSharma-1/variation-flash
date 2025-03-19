@@ -14,24 +14,25 @@ import {
   getAIDecision
 } from './utils/gameLogic';
 import { createDeck, shuffleDeck, dealCards } from './utils/deck';
+import { playCoinSound, playWinSequence, stopStartMusic, playAmbientMusic, stopAmbientMusic } from './utils/AudioManager';
 
 // Game variations
 const variations = [
   { name: 'Normal', cards: 3 },
-  { name: '3 in Muflis', cards: 3 },
-  { name: '4 in Muflis', cards: 4 },
-  { name: 'Kiss Miss & Jump', cards: 5 },
-  { name: 'AK47 - III', cards: 3 },
-  { name: 'AK47 IV', cards: 4 },
-  { name: 'AK56-III', cards: 3 },
-  { name: 'AK56-IV', cards: 4 },
+  { name: 'Muflis in 3 Cards', cards: 3 },
+  { name: 'Muflis in 4 Cards', cards: 4 },
+  { name: 'Kissing, Missing & Jumping', cards: 5 },
+  { name: 'AK47 in 3 Cards', cards: 3 },
+  { name: 'AK47 in 4 Cards', cards: 4 },
+  { name: 'AK56 in 3 Cards', cards: 3 },
+  { name: 'AK56 in 4 Cards', cards: 4 },
   { name: 'K-Little', cards: 3 },
   { name: 'J-Little', cards: 3 },
   { name: 'Lallan Kallan', cards: 3 },
-  { name: 'Any Card Joker-III', cards: 3 },
-  { name: 'Any Card Joker-IV', cards: 4 },
-  { name: '1942: A Love Story-III', cards: 3 },
-  { name: '1942: A Love Story-IV', cards: 4 },
+  { name: 'Any Card Joker in 3 Cards', cards: 3 },
+  { name: 'Any Card Joker in 4 Cards', cards: 4 },
+  { name: '1942: A Love Story in 3 Cards', cards: 3 },
+  { name: '1942: A Love Story in 4 Cards', cards: 4 },
 ];
 
 function App() {
@@ -150,15 +151,21 @@ function App() {
     setDragMeterValue(value);
   };
   
-  const handleStakeSelection = () => {
-    const { players: newPlayers, currentStake: validStake } = initializeRound(players, dragMeterValue);
-    const { updatedPlayers, pot: upfrontPot } = upfrontDeduction(newPlayers, validStake);
-    
-    setPlayers(updatedPlayers);
-    setCurrentStake(validStake);
-    setPot(upfrontPot);
-    distributeCards(selectedVariation);
-  };
+  // Update the handleStakeSelection function to accept a mode parameter
+
+const handleStakeSelection = (mode = 'blind') => {
+  // Initialize round with selected mode
+  const { players: newPlayers, currentStake: validStake } = initializeRound(players, dragMeterValue, mode);
+  
+  // Collect upfront coins with different rules for blind vs seen
+  const { updatedPlayers, pot: upfrontPot } = upfrontDeduction(newPlayers, validStake);
+  
+  setPlayers(updatedPlayers);
+  setCurrentStake(validStake);
+  setPot(upfrontPot);
+  setGameState('betting');
+  distributeCards(selectedVariation);
+};
   
   const distributeCards = async (variation) => {
     const newDeck = shuffleDeck(createDeck());
@@ -173,7 +180,8 @@ function App() {
         if (hands[playerIndex][cycle]) {
           tempDealtHands[playerIndex].push(hands[playerIndex][cycle]);
           setDealtHands([...tempDealtHands]);
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Increased delay between each card distribution
+          await new Promise(resolve => setTimeout(resolve, 400));
         }
       }
     }
@@ -185,6 +193,8 @@ function App() {
       }))
     );
     
+    // Add a final delay before moving to betting phase
+    await new Promise(resolve => setTimeout(resolve, 600));
     setDealing(false);
     setGameState('betting');
     setCurrentPlayerIndex(0);
@@ -193,11 +203,33 @@ function App() {
     }
   };
   
-  const handlePlayerAction = (choice) => {
+  const handlePlayerAction = (action) => {
     const { players: updatedPlayers, currentStake: updatedStake, pot: updatedPot } =
-      processPlayerTurn(players, currentPlayerIndex, choice, currentStake, pot);
+      processPlayerTurn(players, currentPlayerIndex, action, currentStake, pot);
     
-    if (choice === "seen" && updatedPlayers[currentPlayerIndex].isHuman) {
+    const currentPlayer = players[currentPlayerIndex];
+    let betAmount = 0;
+    
+    if (action === 'blind') {
+      // For blind action
+      betAmount = currentStake;
+      
+      // Play sound based on amount
+      playCoinSound(betAmount);
+      
+      // Rest of your existing code for handling blind action
+    } 
+    else if (action === 'seen') {
+      // For seen action
+      betAmount = 2 * currentStake;
+      
+      // Play sound based on amount
+      playCoinSound(betAmount);
+      
+      // Rest of your existing code for handling seen action
+    }
+    
+    if (action === "seen" && updatedPlayers[currentPlayerIndex].isHuman) {
       updatedPlayers[currentPlayerIndex].hasSeenCards = true;
     }
     
@@ -205,7 +237,7 @@ function App() {
     setCurrentStake(updatedStake);
     setPot(updatedPot);
     
-    if (choice === "show" && updatedPlayers.filter(p => !p.hasFolded).length === 2) {
+    if (action === "show" && updatedPlayers.filter(p => !p.hasFolded).length === 2) {
       setGameState('showdown');
       setShowAllCards(true);
       setShowWinnerModal(true);
@@ -298,6 +330,61 @@ function App() {
       }, 1500);
     }
   }, [currentPlayerIndex, gameState, players]);
+  
+  // Handle audio during state transitions
+  useEffect(() => {
+    if (gameState === 'startScreen') {
+      // Don't try to auto-play here - StartScreen handles this itself
+      // Just make sure other game sounds are stopped
+      const allGameSounds = document.querySelectorAll('audio:not([src*="start.mp3"])');
+      allGameSounds.forEach(sound => {
+        if (!sound.paused) {
+          sound.pause();
+          sound.currentTime = 0;
+        }
+      });
+    } else {
+      // When moving away from startScreen, make sure start music is stopped
+      // (This is a backup to the stopMusic in StartScreen's handleStart)
+      const startMusic = document.querySelector('audio[src*="start.mp3"]');
+      if (startMusic && !startMusic.paused) {
+        startMusic.pause();
+        startMusic.currentTime = 0;
+      }
+    }
+  }, [gameState]);
+  
+  useEffect(() => {
+    if (gameState !== 'startScreen') {
+      // When leaving the start screen, ensure start music is stopped
+      console.log('Left start screen, performing additional audio cleanup');
+      
+      // Call the stopStartMusic utility
+      stopStartMusic();
+      
+      // Direct manipulation of audio elements as backup
+      const startMusicElements = document.querySelectorAll('audio[src*="start.mp3"]');
+      startMusicElements.forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.loop = false;
+        console.log('App.js stopped start.mp3 element');
+      });
+      
+      // Create and dispatch a custom event that can be listened for
+      document.dispatchEvent(new CustomEvent('stopStartMusic'));
+    }
+  }, [gameState]);
+  
+  useEffect(() => {
+    if (gameState === 'game') {
+      // Start ambient track to mimic a casino vibe during game play
+      playAmbientMusic().catch(err => console.log('Ambient play error:', err));
+    } else {
+      // Stop ambient music when not in game play
+      stopAmbientMusic();
+    }
+  }, [gameState]);
   
   // Create a gradual fading background transition between game states
   const getBackgroundClass = () => {

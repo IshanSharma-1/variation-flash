@@ -1,13 +1,26 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { Twemoji } from "react-emoji-render"; // Changed from Emoji to Twemoji
 
-const MAX_FLOATING_EMOJIS = 10; // Limit floating emojis for performance
+const MAX_FLOATING_EMOJIS = 30; // Increased limit
 
 function ReactionButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [floatingEmojis, setFloatingEmojis] = useState([]);
 
-  const emojis = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
+  // Enhanced emoji collection with more visually appealing options
+  const emojis = [
+    "😍", // heart_eyes
+    "😂", // joy
+    "👏", // clap
+    "🔥", // fire
+    "🎉", // tada
+    "💯", // 100
+    "👑", // crown
+    "✨", // sparkles
+    "🌟", // star2
+    "😎"  // sunglasses
+  ];
 
   const toggleOpen = () => setIsOpen(!isOpen);
   const closeReactions = () => setIsOpen(false);
@@ -30,7 +43,7 @@ function ReactionButton() {
         onClick={toggleOpen}
         className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-blue-600 flex items-center justify-center text-white text-2xl shadow-lg hover:shadow-xl transition-all duration-200"
       >
-        😊
+        😃
       </button>
 
       {isOpen && (
@@ -44,12 +57,12 @@ function ReactionButton() {
               ✕
             </button>
           </div>
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-wrap gap-3 justify-center">
             {emojis.map((emoji, index) => (
               <button
                 key={index}
                 onClick={() => addFloatingEmoji(emoji)}
-                className="text-2xl hover:scale-110 transition-transform duration-200"
+                className="text-2xl hover:scale-125 transition-transform duration-200"
               >
                 {emoji}
               </button>
@@ -72,17 +85,22 @@ function ReactionButton() {
 }
 
 function FloatingEmoji({ emoji, onComplete }) {
-  const randomXOffset = -100 + Math.random() * 200;
-  const randomRotation = 360 * (Math.random() > 0.5 ? 1 : -1);
-
+  // Small horizontal variation but no rotation
+  const smallXOffset = -30 + Math.random() * 60;
+  
   const variants = {
-    initial: { opacity: 0, y: 100, x: randomXOffset },
+    initial: { 
+      opacity: 0, 
+      y: 100, 
+      x: smallXOffset,
+      scale: 0.8
+    },
     animate: {
       opacity: [0, 1, 0],
       y: -window.innerHeight - 100,
-      x: randomXOffset + 100 + Math.random() * 100,
-      rotate: randomRotation,
-    },
+      x: smallXOffset, // Keep horizontal position stable
+      scale: [0.8, 1, 0.8] // Small scale animation
+    }
   };
 
   return (
@@ -90,9 +108,12 @@ function FloatingEmoji({ emoji, onComplete }) {
       initial="initial"
       animate="animate"
       variants={variants}
-      transition={{ duration: 2 + Math.random(), ease: "easeOut" }}
+      transition={{ 
+        duration: 1.8 + Math.random() * 0.5, 
+        ease: "easeOut" 
+      }}
       onAnimationComplete={onComplete}
-      className="absolute bottom-0 left-1/2 text-4xl"
+      className="absolute bottom-0 left-1/2 text-3xl" // Use smaller text size
       style={{ transform: "translateX(-50%)" }}
     >
       {emoji}

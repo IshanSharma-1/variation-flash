@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import PlayerPanel from './PlayerPanel';
 import Controls from './Controls';
 import ReactionButton from './ReactionButton';
@@ -17,14 +18,17 @@ function GameBoard({
   dragMeterValue,
   onStakeChange,
   currentCycle,
-  handleStakeSelection // Correctly receive this prop
+  handleStakeSelection
 }) {
   const [screenSize, setScreenSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight
   });
   
-  // Track screen size for responsive layout with debounce for better performance
+  // Add state for selected mode
+  const [selectedMode, setSelectedMode] = useState('blind');
+  
+  // Screen size effect
   useEffect(() => {
     let timeoutId = null;
     
@@ -39,8 +43,6 @@ function GameBoard({
     };
     
     window.addEventListener('resize', handleResize);
-    
-    // Initial size check
     handleResize();
     
     return () => {
@@ -49,23 +51,6 @@ function GameBoard({
     };
   }, []);
   
-  // Determine columns based on screen size and player count
-  const getGridColumns = () => {
-    const { width } = screenSize;
-    const playerCount = players.length;
-    
-    if (width < 640) { // Mobile
-      return 'grid-cols-1';
-    } else if (width < 768) { // Small tablets
-      return playerCount <= 4 ? 'grid-cols-2' : 'grid-cols-2';
-    } else if (width < 1024) { // Tablets
-      return playerCount <= 3 ? 'grid-cols-3' : 'grid-cols-2';
-    } else { // Desktops
-      return playerCount <= 3 ? 'grid-cols-3' : 
-             playerCount <= 6 ? 'grid-cols-3' : 'grid-cols-4';
-    }
-  };
-
   // Safety check for valid player index
   if (currentPlayerIndex < 0 || currentPlayerIndex >= players.length) {
     return null;
@@ -74,101 +59,220 @@ function GameBoard({
   const currentPlayer = players[currentPlayerIndex];
   const isHumanTurn = currentPlayer?.isHuman;
   const activePlayers = players.filter(p => !p.hasFolded).length;
-  const gridColumns = getGridColumns();
   const isSmallScreen = screenSize.width < 640;
   const isMediumScreen = screenSize.width >= 640 && screenSize.width < 768;
 
-  // Render the stake selection UI
+  // Function to calculate positions for circular layout with even distribution
+  const getPlayerPosition = (index, totalPlayers) => {
+    // Calculate the angle for even distribution (360 degrees / total players)
+    const angleStep = (2 * Math.PI) / totalPlayers;
+    
+    // Calculate this player's angle (starting from top, moving clockwise)
+    // Subtract π/2 to start from top (default starts from right)
+    const angle = (angleStep * index) - (Math.PI / 2);
+    
+    // Set radius based on screen size (as percentage of container)
+    const radius = isSmallScreen ? 40 : 45;
+    
+    // Calculate positions using parametric circle equations
+    const x = 50 + radius * Math.cos(angle); // 50 is center point (50%)
+    const y = 50 + radius * Math.sin(angle);
+    
+    return {
+      left: `${x}%`,
+      top: `${y}%`,
+      transform: 'translate(-50%, -50%)',
+      // Add transition for smooth position updates
+      transition: 'all 0.5s ease-out'
+    };
+  };
+
+  // Stake selection UI
   const renderStakeSelection = () => (
-    <div className="flex flex-col items-center space-y-6 glassmorphic-bg p-4 md:p-6 rounded-xl">
-      <h2 className="text-xl md:text-2xl text-white royal-text">Set the Current Stake</h2>
-      <div className="w-64 flex items-center">
+    <div className="flex flex-col items-center space-y-6 glassmorphic-bg p-6 md:p-8 rounded-xl w-11/12 max-w-md mx-auto">
+      <h2 className="text-2xl md:text-3xl text-white royal-text embossed">Game Setup</h2>
+      
+      <div className="royal-divider w-3/4"></div>
+      
+      {/* Mode Selection */}
+      <div className="w-full max-w-xs mb-4">
+        <h3 className="text-lg text-white mb-3">Select Your Playing Mode</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <button 
+            onClick={() => setSelectedMode('blind')} 
+            className={`p-3 rounded-lg flex flex-col items-center ${
+              selectedMode === 'blind' 
+                ? 'bg-gradient-to-r from-blue-900 to-blue-700 border border-blue-400' 
+                : 'bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600'
+            }`}
+          >
+            <span className="text-white font-bold">Blind</span>
+            <span className="text-xs text-gray-300 mt-1">Cards remain hidden</span>
+            <span className="card-suit suit-club mt-1">♣</span>
+          </button>
+          
+          <button 
+            onClick={() => setSelectedMode('seen')} 
+            className={`p-3 rounded-lg flex flex-col items-center ${
+              selectedMode === 'seen' 
+                ? 'bg-gradient-to-r from-purple-900 to-purple-700 border border-purple-400' 
+                : 'bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600'
+            }`}
+          >
+            <span className="text-white font-bold">Seen</span>
+            <span className="text-xs text-gray-300 mt-1">See cards immediately</span>
+            <span className="card-suit suit-spade mt-1">♠</span>
+          </button>
+        </div>
+        
+        <p className="text-xs text-yellow-200 mt-2">
+          {selectedMode === 'blind' 
+            ? 'Blind mode: Pay 1 extra coin per bet, but opponents cannot see your cards' 
+            : 'Seen mode: See your cards immediately, but pay double stakes'}
+        </p>
+      </div>
+      
+      {/* Stake Selection */}
+      <div className="w-full max-w-xs">
+        <h3 className="text-lg text-white mb-2">Set Stake</h3>
+        <div className="flex justify-between text-sm text-gray-400 px-2 mb-1">
+          <span>Low</span>
+          <span>Medium</span>
+          <span>High</span>
+        </div>
+        
         <input
           type="range"
           min="1"
           max="3"
           step="1"
-          defaultValue={dragMeterValue}
+          value={dragMeterValue}
           className="w-full touch-action-manipulation custom-slider"
           onChange={(e) => onStakeChange(parseInt(e.target.value))}
         />
+        
+        <div className="flex justify-between mt-2">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            dragMeterValue === 1 ? 'bg-gradient-to-r from-red-900 to-yellow-700 border border-yellow-400' : 'bg-gray-800'
+          }`}>1</div>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            dragMeterValue === 2 ? 'bg-gradient-to-r from-red-900 to-yellow-700 border border-yellow-400' : 'bg-gray-800'
+          }`}>2</div>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            dragMeterValue === 3 ? 'bg-gradient-to-r from-red-900 to-yellow-700 border border-yellow-400' : 'bg-gray-800'
+          }`}>3</div>
+        </div>
       </div>
-      <div className="text-lg md:text-xl text-white">
-        Current Stake: <span className="text-yellow-300">{dragMeterValue}</span> coins
+      
+      <div className="text-lg md:text-xl text-gray-200 mt-2">
+        Current Stake: <span className="text-yellow-300 font-bold">{dragMeterValue}</span> coins
       </div>
-      <button
-        onClick={handleStakeSelection} // Use the prop directly, don't redefine it
-        className="royal-btn mt-6 px-8 py-3 text-white text-xl font-semibold"
+      
+      <motion.button
+        onClick={() => handleStakeSelection(selectedMode)}
+        className="royal-btn mt-6 px-10 py-4 text-white text-xl font-semibold"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
-        <span className="card-suit suit-spade">♠</span> Start Round with Stake: {dragMeterValue} <span className="card-suit suit-heart">♥</span>
-      </button>
+        <span className="card-suit suit-spade mr-2">♠</span>
+        Start Game
+        <span className="card-suit suit-heart ml-2">♥</span>
+      </motion.button>
     </div>
   );
 
   return (
-    <div className="text-center w-full max-w-6xl responsive-container">
-      <div className="aquamorphic-bg mx-auto p-3 md:p-6 rounded-lg">
-        <h1 className="text-2xl md:text-4xl text-white mb-3 md:mb-6 gold-gradient-text royal-text">
-          {isSmallScreen ? variation?.name : `Teen Patti - ${variation?.name}`}
-        </h1>
-        
-        {/* Game status indicators */}
-        <div className={`flex ${isSmallScreen ? 'flex-col space-y-2' : 'justify-between'} items-center mb-3 md:mb-6`}>
-          <div className={`flex ${isSmallScreen ? 'flex-col space-y-1' : 'space-x-6'}`}>
-            <p className="text-base md:text-xl text-yellow-300">Stake: {currentStake}</p>
-            <p className="text-base md:text-xl text-green-300">Pot: {pot}</p>
+    <div className="text-center w-full max-w-6xl responsive-container relative">
+      {/* Poker table with green felt background */}
+      <div className="aquamorphic-bg mx-auto p-3 md:p-6 rounded-lg relative" style={{minHeight: "70vh"}}>
+        {/* Game information header */}
+        <div className="mb-3 md:mb-6 relative z-20 bg-black bg-opacity-50 p-2 rounded-md">
+          <h1 className="text-2xl md:text-4xl text-white gold-gradient-text royal-text">
+            {isSmallScreen ? variation?.name : `Teen Patti - ${variation?.name}`}
+          </h1>
+          
+          {/* Game status indicators */}
+          <div className={`flex ${isSmallScreen ? 'flex-col space-y-2' : 'justify-between'} items-center mb-2`}>
+            <div className={`flex ${isSmallScreen ? 'flex-col space-y-1' : 'space-x-6'}`}>
+              <p className="text-base md:text-xl text-yellow-300">Stake: {currentStake}</p>
+              <p className="text-base md:text-xl text-green-300">Pot: {pot}</p>
+            </div>
+            <p className="text-base md:text-xl text-blue-300">
+              {gamePhase === 'stakeSelection' 
+                ? 'Select Mode & Stake'
+                : gamePhase === 'betting' 
+                  ? `${currentPlayer?.name}'s Turn`
+                  : gamePhase === 'showdown' 
+                    ? 'Showdown!'
+                    : 'Game Over'}
+            </p>
           </div>
-          <p className="text-base md:text-xl text-blue-300">
-            {gamePhase === 'stakeSelection' 
-              ? 'Select Stake'
-              : gamePhase === 'betting' 
-                ? `${currentPlayer?.name}'s Turn`
-                : gamePhase === 'showdown' 
-                  ? 'Showdown!'
-                  : 'Game Over'}
-          </p>
         </div>
         
-        {/* Stake selection UI during stake selection phase */}
+        {/* Circular table background */}
+        <div className="rounded-full bg-green-900 border-8 border-brown-800 absolute inset-4 z-0"></div>
+        
+        {/* Pot indicator in the middle of the table */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+          <div className="bg-black bg-opacity-50 px-4 py-2 rounded-full">
+            <span className="text-green-300 text-xl md:text-2xl font-bold">Pot: {pot}</span>
+          </div>
+        </div>
+        
+        {/* Stake selection modal */}
         {gamePhase === 'stakeSelection' && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
             {renderStakeSelection()}
           </div>
         )}
         
-        {/* Player panels in a responsive grid */}
-        <div className={`grid ${gridColumns} gap-2 md:gap-4 lg:gap-6`}>
+        {/* Player panels in a circular layout */}
+        <div className="relative h-full w-full" style={{ minHeight: '60vh' }}>
           {players.map((player, index) => {
             if (!player) return null;
+            
+            const position = getPlayerPosition(index, players.length);
+            
             return (
-              <PlayerPanel
+              <div
                 key={index}
-                player={player}
-                isCurrent={index === currentPlayerIndex}
-                dealing={dealing}
-                dealtHand={dealtHands[index] || []}
-                showAllCards={showAllCards}
-                isSmallScreen={isSmallScreen || isMediumScreen}
-              />
+                className="absolute"
+                style={{
+                  ...position,
+                  zIndex: player.isHuman ? 30 : 20,
+                  width: isSmallScreen ? '160px' : '200px'
+                }}
+              >
+                <PlayerPanel
+                  player={player}
+                  isCurrent={index === currentPlayerIndex}
+                  dealing={dealing}
+                  dealtHand={dealtHands[index] || []}
+                  showAllCards={showAllCards}
+                  isSmallScreen={isSmallScreen || isMediumScreen}
+                />
+              </div>
             );
           })}
         </div>
         
         {/* Game controls - only shown when it's human player's turn during betting */}
         {isHumanTurn && gamePhase === 'betting' && (
-          <Controls
-            player={currentPlayer}
-            currentStake={currentStake}
-            onPlayerAction={onPlayerAction}
-            currentCycle={currentCycle} 
-            activePlayersCount={activePlayers}
-            isSmallScreen={isSmallScreen}
-          />
+          <div className="absolute w-full left-1/2 transform -translate-x-1/2 bottom-2 z-40">
+            <Controls
+              player={currentPlayer}
+              currentStake={currentStake}
+              onPlayerAction={onPlayerAction}
+              currentCycle={currentCycle} 
+              activePlayersCount={activePlayers}
+              isSmallScreen={isSmallScreen}
+            />
+          </div>
         )}
         
-        {/* Reaction button - hide on very small screens */}
+        {/* Reaction button */}
         {screenSize.width > 480 && (
-          <div className="mt-4 md:mt-6">
+          <div className="absolute right-4 top-4 z-30">
             <ReactionButton />
           </div>
         )}
