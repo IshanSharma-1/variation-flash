@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAllCards, isSmallScreen }) {
+function PlayerPanel({ player, isCurrent, dealing, dealtHand = [], showAllCards, isSmallScreen }) {
   // Defensive check to prevent undefined player errors
   if (!player) return null;
 
@@ -43,7 +43,7 @@ function PlayerPanel({ player, isCurrent, dealing, dealtHand, showAllCards, isSm
       {/* Cards */}
       <div className="flex justify-center space-x-1 md:space-x-2">
         {dealing ? (
-          dealtHand.map((card, i) => (
+          (dealtHand.length > 0 ? dealtHand : []).map((card, i) => (
             <motion.img
               key={i}
               src={getCardSrc(card)}

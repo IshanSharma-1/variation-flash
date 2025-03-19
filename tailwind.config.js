@@ -8,7 +8,9 @@ module.exports = {
         glassWhite: 'rgba(255, 255, 255, 0.15)',
       },
       fontFamily: {
-        sans: ["'Segoe UI'", 'sans-serif'],
+        sans: ['Montserrat', "'Segoe UI'", 'sans-serif'],
+        title: ['Cinzel', 'serif'],
+        accent: ['Playfair Display', 'serif'],
       },
       keyframes: {
         particleMove: {

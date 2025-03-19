@@ -11,6 +11,23 @@ const audioFiles = {
   cardDistribute: new Audio(process.env.PUBLIC_URL + '/assets/sound/cardDistribute.mp3')
 };
 
+// Set initial volumes for all audio files
+const setInitialVolumes = () => {
+  // Background music - slightly lower
+  audioFiles.start.volume = 0.5;    // Start screen music at 50%
+  audioFiles.ambient.volume = 0.25;   // Game ambient at 40%
+  audioFiles.lobby.volume = 0.25;     // Lobby music at 50%
+  
+  // Sound effects - keep them noticeable but not too loud
+  audioFiles.oneCoin.volume = 0.9;   // Coin sounds at 60%
+  audioFiles.twoCoins.volume = 0.9;  // Coin sounds at 60%
+  audioFiles.congrats.volume = 0.9;  // Congrats sound at 70%
+  audioFiles.cardDistribute.volume = 1; // Card dealing sound at 50%
+};
+
+// Call this right after defining the audio files
+setInitialVolumes();
+
 // Set loop properties
 audioFiles.start.loop = true;
 audioFiles.ambient.loop = true;

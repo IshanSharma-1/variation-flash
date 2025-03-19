@@ -12,7 +12,7 @@ function GameBoard({
   variation,
   gamePhase,
   dealing,
-  dealtHands,
+  dealtHands, // Added back to props
   showAllCards,
   onPlayerAction,
   dragMeterValue,
@@ -24,14 +24,10 @@ function GameBoard({
     width: window.innerWidth,
     height: window.innerHeight
   });
-  
-  // Add state for selected mode
   const [selectedMode, setSelectedMode] = useState('blind');
-  
-  // Screen size effect
+
   useEffect(() => {
     let timeoutId = null;
-    
     const handleResize = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
@@ -41,17 +37,14 @@ function GameBoard({
         });
       }, 150);
     };
-    
     window.addEventListener('resize', handleResize);
     handleResize();
-    
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(timeoutId);
     };
   }, []);
-  
-  // Safety check for valid player index
+
   if (currentPlayerIndex < 0 || currentPlayerIndex >= players.length) {
     return null;
   }
@@ -62,47 +55,33 @@ function GameBoard({
   const isSmallScreen = screenSize.width < 640;
   const isMediumScreen = screenSize.width >= 640 && screenSize.width < 768;
 
-  // Function to calculate positions for circular layout with even distribution
   const getPlayerPosition = (index, totalPlayers) => {
-    // Calculate the angle for even distribution (360 degrees / total players)
     const angleStep = (2 * Math.PI) / totalPlayers;
-    
-    // Calculate this player's angle (starting from top, moving clockwise)
-    // Subtract π/2 to start from top (default starts from right)
     const angle = (angleStep * index) - (Math.PI / 2);
-    
-    // Set radius based on screen size (as percentage of container)
-    const radius = isSmallScreen ? 40 : 45;
-    
-    // Calculate positions using parametric circle equations
-    const x = 50 + radius * Math.cos(angle); // 50 is center point (50%)
+    const radius = isSmallScreen ? 38 : 42;
+    const x = 50 + radius * Math.cos(angle);
     const y = 50 + radius * Math.sin(angle);
-    
+    const zOffset = 10 * Math.sin(angle + Math.PI / 2);
     return {
       left: `${x}%`,
       top: `${y}%`,
-      transform: 'translate(-50%, -50%)',
-      // Add transition for smooth position updates
+      transform: `translate(-50%, -50%) translateZ(${zOffset}px)`,
       transition: 'all 0.5s ease-out'
     };
   };
 
-  // Stake selection UI
   const renderStakeSelection = () => (
     <div className="flex flex-col items-center space-y-6 glassmorphic-bg p-6 md:p-8 rounded-xl w-11/12 max-w-md mx-auto">
       <h2 className="text-2xl md:text-3xl text-white royal-text embossed">Game Setup</h2>
-      
       <div className="royal-divider w-3/4"></div>
-      
-      {/* Mode Selection */}
       <div className="w-full max-w-xs mb-4">
         <h3 className="text-lg text-white mb-3">Select Your Playing Mode</h3>
         <div className="grid grid-cols-2 gap-3">
-          <button 
-            onClick={() => setSelectedMode('blind')} 
+          <button
+            onClick={() => setSelectedMode('blind')}
             className={`p-3 rounded-lg flex flex-col items-center ${
-              selectedMode === 'blind' 
-                ? 'bg-gradient-to-r from-blue-900 to-blue-700 border border-blue-400' 
+              selectedMode === 'blind'
+                ? 'bg-gradient-to-r from-blue-900 to-blue-700 border border-blue-400'
                 : 'bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600'
             }`}
           >
@@ -110,12 +89,11 @@ function GameBoard({
             <span className="text-xs text-gray-300 mt-1">Cards remain hidden</span>
             <span className="card-suit suit-club mt-1">♣</span>
           </button>
-          
-          <button 
-            onClick={() => setSelectedMode('seen')} 
+          <button
+            onClick={() => setSelectedMode('seen')}
             className={`p-3 rounded-lg flex flex-col items-center ${
-              selectedMode === 'seen' 
-                ? 'bg-gradient-to-r from-purple-900 to-purple-700 border border-purple-400' 
+              selectedMode === 'seen'
+                ? 'bg-gradient-to-r from-purple-900 to-purple-700 border border-purple-400'
                 : 'bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-600'
             }`}
           >
@@ -124,15 +102,12 @@ function GameBoard({
             <span className="card-suit suit-spade mt-1">♠</span>
           </button>
         </div>
-        
         <p className="text-xs text-yellow-200 mt-2">
-          {selectedMode === 'blind' 
-            ? 'Blind mode: Pay 1 extra coin per bet, but opponents cannot see your cards' 
+          {selectedMode === 'blind'
+            ? 'Blind mode: Pay 1 extra coin per bet, but opponents cannot see your cards'
             : 'Seen mode: See your cards immediately, but pay double stakes'}
         </p>
       </div>
-      
-      {/* Stake Selection */}
       <div className="w-full max-w-xs">
         <h3 className="text-lg text-white mb-2">Set Stake</h3>
         <div className="flex justify-between text-sm text-gray-400 px-2 mb-1">
@@ -140,7 +115,6 @@ function GameBoard({
           <span>Medium</span>
           <span>High</span>
         </div>
-        
         <input
           type="range"
           min="1"
@@ -150,7 +124,6 @@ function GameBoard({
           className="w-full touch-action-manipulation custom-slider"
           onChange={(e) => onStakeChange(parseInt(e.target.value))}
         />
-        
         <div className="flex justify-between mt-2">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
             dragMeterValue === 1 ? 'bg-gradient-to-r from-red-900 to-yellow-700 border border-yellow-400' : 'bg-gray-800'
@@ -163,11 +136,9 @@ function GameBoard({
           }`}>3</div>
         </div>
       </div>
-      
       <div className="text-lg md:text-xl text-gray-200 mt-2">
         Current Stake: <span className="text-yellow-300 font-bold">{dragMeterValue}</span> coins
       </div>
-      
       <motion.button
         onClick={() => handleStakeSelection(selectedMode)}
         className="royal-btn mt-6 px-10 py-4 text-white text-xl font-semibold"
@@ -182,95 +153,92 @@ function GameBoard({
   );
 
   return (
-    <div className="text-center w-full max-w-6xl responsive-container relative">
-      {/* Poker table with green felt background */}
-      <div className="aquamorphic-bg mx-auto p-3 md:p-6 rounded-lg relative" style={{minHeight: "70vh"}}>
-        {/* Game information header */}
+    <div className="text-center w-full max-w-6xl responsive-container relative table-perspective-container">
+      <div className="aquamorphic-bg mx-auto p-3 md:p-6 rounded-lg relative" style={{ minHeight: "70vh" }}>
         <div className="mb-3 md:mb-6 relative z-20 bg-black bg-opacity-50 p-2 rounded-md">
           <h1 className="text-2xl md:text-4xl text-white gold-gradient-text royal-text">
             {isSmallScreen ? variation?.name : `Teen Patti - ${variation?.name}`}
           </h1>
-          
-          {/* Game status indicators */}
           <div className={`flex ${isSmallScreen ? 'flex-col space-y-2' : 'justify-between'} items-center mb-2`}>
             <div className={`flex ${isSmallScreen ? 'flex-col space-y-1' : 'space-x-6'}`}>
               <p className="text-base md:text-xl text-yellow-300">Stake: {currentStake}</p>
               <p className="text-base md:text-xl text-green-300">Pot: {pot}</p>
             </div>
             <p className="text-base md:text-xl text-blue-300">
-              {gamePhase === 'stakeSelection' 
+              {gamePhase === 'stakeSelection'
                 ? 'Select Mode & Stake'
-                : gamePhase === 'betting' 
+                : gamePhase === 'betting'
                   ? `${currentPlayer?.name}'s Turn`
-                  : gamePhase === 'showdown' 
+                  : gamePhase === 'showdown'
                     ? 'Showdown!'
                     : 'Game Over'}
             </p>
           </div>
         </div>
-        
-        {/* Circular table background */}
-        <div className="rounded-full bg-green-900 border-8 border-brown-800 absolute inset-4 z-0"></div>
-        
-        {/* Pot indicator in the middle of the table */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-          <div className="bg-black bg-opacity-50 px-4 py-2 rounded-full">
-            <span className="text-green-300 text-xl md:text-2xl font-bold">Pot: {pot}</span>
+
+        <div className="relative table-3d" style={{ height: "60vh" }}>
+          <div className="table-rim"></div>
+          <div className="table-surface rounded-full absolute inset-0">
+            <div className="relative h-full w-full">
+              {players.map((player, index) => {
+                if (!player) return null;
+                const position = getPlayerPosition(index, players.length);
+                return (
+                  <div
+                    key={index}
+                    className="absolute player-3d"
+                    style={{
+                      ...position,
+                      zIndex: player.isHuman ? 30 : 20,
+                      width: isSmallScreen ? '100px' : '140px'
+                    }}
+                  >
+                    <div className="player-panel-3d">
+                      <PlayerPanel
+                        player={player}
+                        isCurrent={index === currentPlayerIndex}
+                        dealing={dealing}
+                        dealtHand={dealtHands && dealtHands[index] ? dealtHands[index] : []} // Pass dealtHand safely
+                        showAllCards={showAllCards}
+                        isSmallScreen={isSmallScreen || isMediumScreen}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+              <div className="bg-black bg-opacity-50 px-4 py-2 rounded-full">
+                <span className="text-green-300 text-xl md:text-2xl font-bold">Pot: {pot}</span>
+              </div>
+              {pot > 0 && (
+                <div className="mt-2 chip-stack">
+                  {[...Array(Math.min(5, Math.ceil(pot / 20)))].map((_, i) => (
+                    <div key={i} className="chip" style={{ transform: `translateZ(${i * 4}px)` }}></div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        
-        {/* Stake selection modal */}
+
         {gamePhase === 'stakeSelection' && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
             {renderStakeSelection()}
           </div>
         )}
-        
-        {/* Player panels in a circular layout */}
-        <div className="relative h-full w-full" style={{ minHeight: '60vh' }}>
-          {players.map((player, index) => {
-            if (!player) return null;
-            
-            const position = getPlayerPosition(index, players.length);
-            
-            return (
-              <div
-                key={index}
-                className="absolute"
-                style={{
-                  ...position,
-                  zIndex: player.isHuman ? 30 : 20,
-                  width: isSmallScreen ? '160px' : '200px'
-                }}
-              >
-                <PlayerPanel
-                  player={player}
-                  isCurrent={index === currentPlayerIndex}
-                  dealing={dealing}
-                  dealtHand={dealtHands[index] || []}
-                  showAllCards={showAllCards}
-                  isSmallScreen={isSmallScreen || isMediumScreen}
-                />
-              </div>
-            );
-          })}
-        </div>
-        
-        {/* Game controls - only shown when it's human player's turn during betting */}
         {isHumanTurn && gamePhase === 'betting' && (
           <div className="absolute w-full left-1/2 transform -translate-x-1/2 bottom-2 z-40">
             <Controls
               player={currentPlayer}
               currentStake={currentStake}
               onPlayerAction={onPlayerAction}
-              currentCycle={currentCycle} 
+              currentCycle={currentCycle}
               activePlayersCount={activePlayers}
               isSmallScreen={isSmallScreen}
             />
           </div>
         )}
-        
-        {/* Reaction button */}
         {screenSize.width > 480 && (
           <div className="absolute right-4 top-4 z-30">
             <ReactionButton />
