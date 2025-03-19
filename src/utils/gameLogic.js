@@ -120,8 +120,42 @@ export const processPlayerTurn = (players, currentPlayerIndex, choice, currentSt
 };
 
 export function determineWinnerAndDistributePot(players, pot) {
+  // First, check for the special rule:
   const activePlayers = players.filter(p => !p.hasFolded);
-  
+  let specialWinner = null;
+
+  for (let player of activePlayers) {
+    const hand = player.hand;
+    if (hand && (hand.length === 3 || hand.length === 4)) {
+      const isIdentical = hand.every(card => card.rank === hand[0].rank);
+      if (isIdentical) {
+        specialWinner = player;
+        break;
+      }
+    }
+  }
+
+  if (specialWinner) {
+    // Set bonus as per hand size
+    const bonus = specialWinner.hand.length === 3 ? 10 : 20;
+
+    // Debit bonus coins from every other player and add them to the winner.
+    players.forEach(p => {
+      if (p.id !== specialWinner.id) {
+        p.coins -= bonus;
+        specialWinner.coins += bonus;
+      }
+    });
+
+    // Return with specialWinner as winner and pot zeroed.
+    return {
+      players,
+      winner: specialWinner,
+      pot: 0
+    };
+  }
+
+  // If no special hand, use existing rule:
   if (activePlayers.length === 1) {
     const winnerIndex = players.findIndex(p => p.id === activePlayers[0].id);
     const updatedPlayers = [...players];
@@ -132,14 +166,13 @@ export function determineWinnerAndDistributePot(players, pot) {
       pot: 0
     };
   }
-  
+
   return {
     players,
     winner: null,
     pot
   };
 }
-
 export function isRoundOver(players) {
   const activePlayers = players.filter(p => !p.hasFolded);
   return (

@@ -712,3 +712,13 @@ input[type="range"]::-webkit-slider-thumb {
   background: rgba(0, 0, 0, 0.3);
   filter: blur(5px);
 }
+
+.playing-card,
+.winner-selection-card {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;  /* For browsers that support it */
+  /* Ensure the image is displayed at the correct size */
+  width: auto;
+  height: auto;
+}

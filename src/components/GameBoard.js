@@ -56,17 +56,21 @@ function GameBoard({
   const isMediumScreen = screenSize.width >= 640 && screenSize.width < 768;
 
   const getPlayerPosition = (index, totalPlayers) => {
+    // Dynamically set the radius based on player count.
+    // With more players, use a larger radius.
+    const radius = totalPlayers <= 4 ? 40 : totalPlayers <= 6 ? 60 : 80;
+    
     const angleStep = (2 * Math.PI) / totalPlayers;
     const angle = (angleStep * index) - (Math.PI / 2);
-    const radius = isSmallScreen ? 38 : 42;
+    
+    // Calculate positions using percentage offsets.
     const x = 50 + radius * Math.cos(angle);
     const y = 50 + radius * Math.sin(angle);
-    const zOffset = 10 * Math.sin(angle + Math.PI / 2);
+    
     return {
       left: `${x}%`,
       top: `${y}%`,
-      transform: `translate(-50%, -50%) translateZ(${zOffset}px)`,
-      transition: 'all 0.5s ease-out'
+      transform: `translate(-50%, -50%)`
     };
   };
 
@@ -154,7 +158,7 @@ function GameBoard({
 
   return (
     <div className="text-center w-full max-w-6xl responsive-container relative table-perspective-container">
-      <div className="aquamorphic-bg mx-auto p-3 md:p-6 rounded-lg relative" style={{ minHeight: "70vh" }}>
+      <div style={{ minHeight: "70vh" }}>
         <div className="mb-3 md:mb-6 relative z-20 bg-black bg-opacity-50 p-2 rounded-md">
           <h1 className="text-2xl md:text-4xl text-white gold-gradient-text royal-text">
             {isSmallScreen ? variation?.name : `Teen Patti - ${variation?.name}`}

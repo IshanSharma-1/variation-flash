@@ -1,5 +1,5 @@
 {
-    "name": "card-game-project",
+    "name": "the-royal-deal",
     "version": "1.0.0",
     "private": true,
     "dependencies": {
@@ -26,7 +26,8 @@
     },
     "scripts": {
         "start": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts start",
-        "build": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts build"
+        "build": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts build",
+        "test": "jest"
     },
     "browserslist": {
         "production": [
@@ -48,6 +49,7 @@
         "react-app-rewired": "^2.2.1",
         "react-dom": "^18.3.1",
         "react-scripts": "5.0.1",
-        "tailwindcss": "^3.4.17"
+        "tailwindcss": "^3.4.17",
+        "jest": "^29.0.0"
     }
 }
