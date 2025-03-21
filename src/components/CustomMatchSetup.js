@@ -44,7 +44,7 @@ function CustomMatchSetup({ variations, onStartCustomMatch, onBack, players = []
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-auto py-8">
       <div 
-        className="text-center p-8 relative z-20 rounded-xl w-11/12 md:w-3/4 lg:w-2/3 max-w-4xl royal-card"
+        className="text-center p-8"
       >
         <motion.h1 
           className="font-bold mb-6 tracking-wide royal-text"

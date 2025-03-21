@@ -19,7 +19,7 @@ function GameModeSelection({ onSelectMode }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-hidden">
       <div 
-        className="text-center p-10 relative z-20 rounded-xl w-11/12 md:w-96 royal-card"
+        className="text-center p-10"
       >
         <motion.h1 
           className="font-extrabold mb-8 tracking-wide royal-text"

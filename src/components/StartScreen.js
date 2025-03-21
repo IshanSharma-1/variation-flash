@@ -262,10 +262,10 @@ function StartScreen({ onStart }) {
 
       {/* Invisible container with aquamorphic effect */}
       <motion.div 
-        className="w-11/12 md:w-96 text-center p-10 relative z-20 rounded-xl royal-card"
+        className="text-center p-10"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        transition={{ duration: 1.1, ease: "easeOut" }}
         onClick={() => setExplosionTrigger(prev => prev + 1)} // Trigger explosion on click
       >
         {/* Title with shine effect */}

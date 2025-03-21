@@ -63,55 +63,78 @@ export function initializeRound(players, dragMeterValue, humanPlayerMode = 'blin
 }
 
 // Process player's turn action
-export const processPlayerTurn = (players, currentPlayerIndex, choice, currentStake, pot) => {
+export const processPlayerTurn = (players, currentPlayerIndex, choice, currentStake, pot, currentCycle = 1) => {
   const updatedPlayers = [...players];
   let updatedPot = pot;
   let updatedStake = currentStake;
   const currentPlayer = updatedPlayers[currentPlayerIndex];
   
+  // During cycle 1, still process actions but skip all coin deductions
+  if (currentCycle === 1) {
+    switch (choice) {
+      case "blind":
+        // No coins deducted in cycle 1
+        break;
+      case "seen":
+        // Only update mode, no coins deducted in cycle 1
+        if (currentPlayer.mode === "blind") {
+          currentPlayer.mode = "seen";
+          currentPlayer.isSeen = true;
+          currentPlayer.hasSeenCards = true; // Add this line
+        }
+        break;
+      case "show":
+        // No coins deducted in cycle 1
+        break;
+      case "fold":
+        currentPlayer.hasFolded = true;
+        break;
+      default:
+        console.error("Unknown choice:", choice);
+    }
+    
+    return {
+      players: updatedPlayers,
+      currentStake: updatedStake,
+      pot: updatedPot
+    };
+  }
+  
+  // Normal processing for cycle 2+ (existing logic)
   switch (choice) {
     case "blind":
-      // Blind action costs currentStake
       if (currentPlayer.coins >= currentStake) {
         currentPlayer.coins -= currentStake;
         currentPlayer.bet += currentStake;
         updatedPot += currentStake;
       }
       break;
-    
     case "seen":
-      // Reveal cards, change mode to seen if not already
       if (currentPlayer.mode === "blind") {
         currentPlayer.mode = "seen";
         currentPlayer.isSeen = true;
-        // No additional coins needed here since this is just changing the mode
+        currentPlayer.hasSeenCards = true; // Add this line to fix the issue
       }
-      
-      // Seen action costs 2 * currentStake
       if (currentPlayer.coins >= currentStake * 2) {
         currentPlayer.coins -= currentStake * 2;
         currentPlayer.bet += currentStake * 2;
         updatedPot += currentStake * 2;
       }
       break;
-    
     case "show":
-      // For "show" case, same behavior as "seen" in terms of betting
       if (currentPlayer.coins >= currentStake * 2) {
         currentPlayer.coins -= currentStake * 2;
         currentPlayer.bet += currentStake * 2;
         updatedPot += currentStake * 2;
       }
       break;
-    
     case "fold":
       currentPlayer.hasFolded = true;
       break;
-    
     default:
       console.error("Unknown choice:", choice);
   }
-  
+
   return {
     players: updatedPlayers,
     currentStake: updatedStake,
