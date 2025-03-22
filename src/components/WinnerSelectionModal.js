@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 // CSS for Slide-In Animation
 const styles = `
@@ -39,7 +40,7 @@ const WinnerSelectionModal = ({ players, onSelectWinner }) => {
   const humanPlayer = players.find(p => p.isHuman);
   const aiPlayer = players.find(p => !p.isHuman);
 
-  // Card rendering helper function with increased size
+  // Card rendering helper function with reduced size
   const renderCard = (card, index) => (
     <div 
       key={index} 
@@ -49,7 +50,7 @@ const WinnerSelectionModal = ({ players, onSelectWinner }) => {
       <img 
         src={`/assets/cards/${card.rank}_of_${card.suit}.png`}
         alt={`${card.rank} of ${card.suit}`}
-        className="w-24 h-36 md:w-32 md:h-48 lg:w-40 lg:h-56 object-contain border-2 border-white rounded-lg shadow-xl"
+        className="w-16 h-24 md:w-20 md:h-28 lg:w-24 lg:h-32 object-contain border-2 border-white rounded-lg shadow-xl winner-selection-card"
       />
     </div>
   );
@@ -98,27 +99,27 @@ const WinnerSelectionModal = ({ players, onSelectWinner }) => {
           <p className="text-gray-200 text-lg mb-4">Choose the winner of the round:</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {players.map((player) => (
-              <button
+              <motion.button
                 key={player.name}
                 onClick={() => handleSelect(player.name)}
-                className={`px-6 py-3 bg-gradient-to-r text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out animate-pulse-once golden-hover ${
-                  player.isHuman 
-                    ? "from-blue-600 to-blue-800 text-white" 
-                    : "from-red-600 to-red-800 text-white"
-                }`}
+                className={`btn ${player.isHuman ? "btn-secondary" : "btn-danger"} btn-gold-accent px-6 py-3 text-lg font-semibold`}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
               >
                 {player.name}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
         <div className="flex justify-center">
-          <button
+          <motion.button
             onClick={() => handleSelect(null)}
-            className="px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 transition-all duration-200 ease-in-out transform hover:-translate-y-1"
+            className="btn btn-neutral px-6 py-3 mt-4"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
           >
             Cancel
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>

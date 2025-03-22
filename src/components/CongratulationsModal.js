@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Confetti from 'react-confetti';
 import { playWinSequence } from '../utils/AudioManager';
+import { motion } from 'framer-motion';
 
 const CongratulationsModal = ({ winner, onClose }) => {
   const [audioAttempted, setAudioAttempted] = useState(false);
@@ -67,12 +68,14 @@ const CongratulationsModal = ({ winner, onClose }) => {
           <p className="mt-2">Enjoy your victory and claim your prize!</p>
         </div>
         {onClose && (
-          <button 
+          <motion.button 
             onClick={onClose}
-            className="mt-4 w-full py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-bold rounded-lg transition-all duration-200"
+            className="btn-modern bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-bold w-full py-2 rounded-lg"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
           >
             Continue
-          </button>
+          </motion.button>
         )}
       </div>
     </div>

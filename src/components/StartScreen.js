@@ -292,52 +292,22 @@ function StartScreen({ onStart }) {
           }}>Flash</span>
         </motion.h1>
         
-        {/* Enhanced play button */}
+        {/* Main Play Button */}
         <motion.button
-          onClick={handleStart}  // Changed from onStart to handleStart
-          className="px-12 py-4 text-2xl font-semibold rounded-full relative overflow-hidden mt-6 w-full"
-          style={{
-            background: "linear-gradient(to right, #603813, #b29f94)",
-            boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)"
-          }}
+          onClick={handleStart}
+          className="btn btn-primary btn-gold-accent w-full text-xl mt-6 btn-ripple"
           variants={buttonVariants}
           initial="initial"
           whileHover="hover"
           whileTap="tap"
         >
-          <motion.span 
-            className="absolute inset-0"
-            animate={{
-              background: [
-                "linear-gradient(to right, rgba(255,215,0,0.5), rgba(139,69,19,0.3))",
-                "linear-gradient(to right, rgba(139,69,19,0.3), rgba(255,215,0,0.5))",
-                "linear-gradient(to right, rgba(255,215,0,0.5), rgba(139,69,19,0.3))"
-              ]
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
-          />
-          <motion.span 
-            className="absolute inset-0 opacity-60"
-            animate={{ 
-              x: ["-100%", "100%"],
-              transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" }
-            }}
-            style={{
-              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)"
-            }}
-          />
           <span className="relative z-10 text-white">PLAY NOW</span>
         </motion.button>
-        
-        {/* Game Manual Button - NEW ADDITION */}
+
+        {/* Game Manual Button */}
         <motion.button
           onClick={() => setShowManual(true)}
-          className="px-6 py-3 text-lg font-semibold rounded-lg relative overflow-hidden mt-4 w-full"
-          style={{
-            background: "linear-gradient(to right, #000060, #0c280c)",
-            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.3)",
-            border: "1px solid var(--royal-gold)"
-          }}
+          className="btn btn-secondary btn-gold-accent w-full text-lg mt-4 btn-ripple"
           variants={buttonVariants}
           initial="initial"
           whileHover="hover"
@@ -345,7 +315,6 @@ function StartScreen({ onStart }) {
         >
           <span className="card-suit suit-spade mr-2">♠</span>
           <span className="relative z-10 text-white">GAME GUIDE</span>
-          <span className="card-suit suit-heart ml-2">♥</span>
         </motion.button>
 
         {/* Version tag */}

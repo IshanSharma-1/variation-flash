@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ishansharma.royaldeal',
-  appName: 'The Royal Deal',
+  appId: 'io.ishansharma.variationflash',
+  appName: 'Teen Patti: Variation Flash',
   webDir: 'build',
   server: {
     androidScheme: 'https'

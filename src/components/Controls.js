@@ -8,18 +8,11 @@ function Controls({ player, currentStake, onPlayerAction, currentCycle, activePl
   // Only render controls for human player
   if (!player?.isHuman) return null;
   
+  // Updated button variants
   const buttonVariants = {
     initial: { scale: 1 },
-    hover: { 
-      scale: isSmallScreen ? 1.03 : 1.05, // Smaller hover effect on mobile
-      boxShadow: "0px 0px 15px rgba(212, 175, 55, 0.5)",
-      transition: { 
-        type: "spring", 
-        stiffness: 400, 
-        damping: isSmallScreen ? 20 : 15 // More damping on mobile for quicker feedback
-      }
-    },
-    tap: { scale: 0.97 }
+    hover: { scale: 1.03 },
+    tap: { scale: 0.98 }
   };
   
   // If human player is blind, show blind options (after AI turns)
@@ -91,12 +84,17 @@ function Controls({ player, currentStake, onPlayerAction, currentCycle, activePl
         <motion.button
           key={idx}
           onClick={b.action}
-          className={`px-3 md:px-4 py-3 rounded-lg text-white text-sm md:text-base transition-all duration-200 ${b.style}`}
+          className={`btn ${
+            b.style === "royal-btn-green" ? "btn-success" :
+            b.style === "royal-btn-blue" ? "btn-secondary" :
+            b.style === "royal-btn-red" ? "btn-danger" :
+            b.style === "royal-btn-purple" ? "btn-royal" :
+            "btn-primary"
+          } btn-gold-accent text-sm md:text-base btn-ripple`}
           variants={buttonVariants}
           initial="initial"
           whileHover="hover"
           whileTap="tap"
-          // Improve touch handling
           style={{ touchAction: "manipulation" }}
         >
           <span className="mr-1 md:mr-2">{b.icon}</span>

@@ -57,7 +57,7 @@ function CustomMatchSetup({ variations, onStartCustomMatch, onBack, players = []
         
         <div className="royal-divider"></div>
         
-        {/* Player Count Selection - Disabled for subsequent matches */}
+        {/* Player Count Selection - Improved contrast */}
         <div className="mb-8 mt-6">
           <h2 className="text-xl text-white mb-4 royal-text">
             {isFirstMatch ? "Select Number of Players" : "Player Count"}
@@ -68,10 +68,10 @@ function CustomMatchSetup({ variations, onStartCustomMatch, onBack, players = []
               <motion.button
                 key={count}
                 onClick={() => isFirstMatch && setPlayerCount(count)}
-                className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-lg 
+                className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold text-lg 
                   ${playerCount === count 
-                    ? 'bg-gradient-to-r from-red-900 to-yellow-700 shadow-lg border border-yellow-400' 
-                    : 'bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-600'
+                    ? 'bg-gradient-to-r from-amber-600 to-amber-800 text-white border-2 border-yellow-400 shadow-lg' 
+                    : 'bg-gray-700 text-gray-200 border border-gray-600'
                   }
                   ${!isFirstMatch && playerCount !== count ? 'opacity-40 cursor-not-allowed' : ''}
                 `}
@@ -131,7 +131,7 @@ function CustomMatchSetup({ variations, onStartCustomMatch, onBack, players = []
           <div className="flex space-x-4">
             <motion.button
               onClick={onBack}
-              className="px-6 py-3 rounded-lg text-white bg-gray-700 hover:bg-gray-600 border border-gray-500"
+              className="btn-modern bg-gray-700 hover:bg-gray-600 text-white"
               variants={buttonVariants}
               initial="initial"
               whileHover="hover"
@@ -144,8 +144,8 @@ function CustomMatchSetup({ variations, onStartCustomMatch, onBack, players = []
               onClick={startMatch}
               disabled={!selectedVariation}
               className={selectedVariation 
-                ? 'royal-btn px-8 py-3 text-white font-semibold'
-                : 'bg-gray-600 opacity-60 cursor-not-allowed px-8 py-3 rounded-lg text-white font-semibold border border-gray-500'}
+                ? 'btn-modern btn-primary btn-gold-accent font-semibold'
+                : 'btn-modern bg-gray-600 opacity-60 cursor-not-allowed'}
               variants={buttonVariants}
               initial="initial"
               whileHover={selectedVariation ? "hover" : "initial"}
@@ -160,11 +160,11 @@ function CustomMatchSetup({ variations, onStartCustomMatch, onBack, players = []
           {!isFirstMatch && (
             <motion.button
               onClick={handleCashOut}
-              className={`px-8 py-3 rounded-lg text-white font-semibold border ${
+              className={`btn-modern font-semibold ${
                 hasProfit 
-                  ? 'bg-gradient-to-r from-green-700 to-emerald-900 border-green-500' 
-                  : 'bg-gradient-to-r from-orange-700 to-red-900 border-orange-500'
-              }`}
+                  ? 'bg-green-700 hover:bg-green-600' 
+                  : 'bg-red-700 hover:bg-red-600'
+              } btn-gold-accent`}
               variants={buttonVariants}
               initial="initial"
               whileHover="hover"
@@ -198,10 +198,11 @@ function CustomMatchSetup({ variations, onStartCustomMatch, onBack, players = []
                 )}
               </div>
               
+              {/* Cash Out Confirmation Modal Buttons */}
               <div className="flex justify-center space-x-4">
                 <motion.button
                   onClick={() => setShowCashOutConfirm(false)}
-                  className="px-6 py-2 rounded-lg text-white bg-gray-700 hover:bg-gray-600 border border-gray-500"
+                  className="btn btn-neutral px-6 py-2"
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
@@ -214,7 +215,7 @@ function CustomMatchSetup({ variations, onStartCustomMatch, onBack, players = []
                     // Reset the game completely
                     window.location.reload();
                   }}
-                  className="royal-btn px-6 py-2"
+                  className="btn btn-primary btn-gold-accent px-6 py-2 btn-ripple"
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"

@@ -350,7 +350,7 @@ function GameManual({ onClose }) {
         <div className="p-3 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-t border-gray-700 flex justify-end">
           <motion.button
             onClick={onClose}
-            className="royal-btn px-6 py-2"
+            className="btn btn-primary btn-gold-accent px-6 py-2 btn-ripple"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
